@@ -1,9 +1,9 @@
 import { db, auth } from 'hatchable';
 import { newCaseNumber, normalizeIssue, addEvent, addStep } from 'lib/case.js';
-export const access = 'user';
+export const access = 'member';
 export const methods = ['POST'];
 export default async function(req,res){
-  const u=req.user; const b=req.body||{};
+  const u=req.member; const b=req.body||{};
   const issue=normalizeIssue(b.issue_type); const amount=Number(b.amount||0);
   if(!b.description || !Number.isFinite(amount) || amount<0) return res.status(400).json({error:'Tell us what happened and enter a valid amount.'});
   const caseNo=newCaseNumber();

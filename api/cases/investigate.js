@@ -1,8 +1,8 @@
 import { db, ai } from 'hatchable';
 import { getCase, addEvent } from 'lib/case.js';
-export const access='user'; export const methods=['POST'];
+export const access='member'; export const methods=['POST'];
 export default async function(req,res){
- const c=await getCase(req.body?.case_id,req.user.id); if(!c)return res.status(404).json({error:'Case not found.'});
+ const c=await getCase(req.body?.case_id,req.member.id); if(!c)return res.status(404).json({error:'Case not found.'});
  const prompt=`Classify this payment recovery case. Return JSON-like plain text with likely_canonical_state, risk, explanation. Never claim a provider confirmed anything. Issue: ${c.issue_type}; description: ${c.description}; amount: ${c.amount} ${c.currency}; merchant: ${c.merchant_name||'unknown'}; reference: ${c.transaction_reference||'unknown'}.`;
  let explanation='RecoverIT is checking the available information without assuming an unverified provider state.';
  try{ const out=await ai.generateText({model:'sonnet',prompt,purpose:'payment recovery investigation'}); explanation=String(out.text||out).slice(0,1000); }catch(e){ console.log('AI unavailable',e.message); }
