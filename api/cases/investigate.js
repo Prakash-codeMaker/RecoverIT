@@ -4,10 +4,10 @@ export const access='member'; export const methods=['POST'];
 export default async function(req,res){
  const c=await getCase(req.body?.case_id,req.member.id); if(!c)return res.status(404).json({error:'Case not found.'});
  await db.query('UPDATE recovery_cases SET status=$1,updated_at=now() WHERE id=$2',['INVESTIGATING',c.id]);
- await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['RUNNING','Reading your story and evidence.',c.id,'payment']);
- await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['RUNNING','Checking the evidence timeline.',c.id,'timeline']);
- await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['RUNNING','Checking for provider-side evidence.',c.id,'provider']);
- await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['RUNNING','Preparing the safest next steps.',c.id,'safe_path']);
+ await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['RUNNING','Starting with the payment facts from your story.',c.id,'payment']);
+ await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['PENDING','Next: reconstruct the evidence timeline.',c.id,'timeline']);
+ await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['PENDING','Next: check provider-side evidence.',c.id,'provider']);
+ await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['PENDING','Next: prepare the safest recovery plan.',c.id,'safe_path']);
  await addEvent(c.id,'Investigation started','RecoverIT is now working through your story, proof and available provider evidence. You can stay on this page; progress will update automatically.','INVESTIGATING','RecoverIT');
  await scheduler.now('/api/cases/investigate-worker',{case_id:c.id,user_id:req.member.id});
  res.status(202).json({ok:true,status:'INVESTIGATING',message:'Investigation started. Progress will update automatically.'});
