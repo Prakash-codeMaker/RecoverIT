@@ -1,0 +1,1 @@
+CREATE TABLE provider_events (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), provider text NOT NULL, external_event_id text NOT NULL UNIQUE, event_type text NOT NULL, canonical_state text NOT NULL DEFAULT 'UNKNOWN', payload_json jsonb NOT NULL DEFAULT '{}'::jsonb, received_at timestamptz NOT NULL DEFAULT now())

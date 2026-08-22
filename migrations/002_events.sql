@@ -1,0 +1,1 @@
+CREATE TABLE case_events (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), case_id uuid NOT NULL REFERENCES recovery_cases(id) ON DELETE CASCADE, event_type text NOT NULL, title text NOT NULL, detail text, state text, source text, confidence numeric(5,2), created_at timestamptz NOT NULL DEFAULT now())

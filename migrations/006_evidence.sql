@@ -1,0 +1,1 @@
+CREATE TABLE evidence (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), case_id uuid NOT NULL REFERENCES recovery_cases(id) ON DELETE CASCADE, user_id text NOT NULL, filename text NOT NULL, content_type text NOT NULL, bytes bigint NOT NULL, storage_key text NOT NULL, sha256 text NOT NULL, created_at timestamptz NOT NULL DEFAULT now())

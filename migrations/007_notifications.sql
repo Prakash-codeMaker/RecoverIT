@@ -1,0 +1,1 @@
+CREATE TABLE notifications (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id text NOT NULL, case_id uuid REFERENCES recovery_cases(id) ON DELETE CASCADE, type text NOT NULL, title text NOT NULL, description text NOT NULL, read boolean NOT NULL DEFAULT false, created_at timestamptz NOT NULL DEFAULT now())

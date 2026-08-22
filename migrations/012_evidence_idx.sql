@@ -1,0 +1,1 @@
+CREATE INDEX evidence_user_idx ON evidence(user_id, created_at DESC)

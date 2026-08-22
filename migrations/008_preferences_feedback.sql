@@ -1,0 +1,1 @@
+CREATE TABLE notification_preferences (user_id text PRIMARY KEY, email boolean NOT NULL DEFAULT true, sms boolean NOT NULL DEFAULT false, whatsapp boolean NOT NULL DEFAULT false, push boolean NOT NULL DEFAULT true, consent_at timestamptz NOT NULL DEFAULT now())

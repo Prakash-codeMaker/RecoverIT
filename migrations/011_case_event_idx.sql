@@ -1,0 +1,1 @@
+CREATE INDEX case_events_case_idx ON case_events(case_id, created_at ASC)

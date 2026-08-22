@@ -1,0 +1,1 @@
+CREATE TABLE investigation_steps (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), case_id uuid NOT NULL REFERENCES recovery_cases(id) ON DELETE CASCADE, step_key text NOT NULL, title text NOT NULL, status text NOT NULL DEFAULT 'PENDING', detail text, created_at timestamptz NOT NULL DEFAULT now(), completed_at timestamptz)

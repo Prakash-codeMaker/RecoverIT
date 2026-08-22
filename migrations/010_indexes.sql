@@ -1,0 +1,1 @@
+CREATE INDEX recovery_cases_user_idx ON recovery_cases(user_id, created_at DESC)

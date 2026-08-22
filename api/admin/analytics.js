@@ -1,0 +1,3 @@
+import { db } from 'hatchable';
+export const access='admin'; export const methods=['GET'];
+export default async function(req,res){const a=await db.query('SELECT status,count(*)::int count FROM recovery_cases GROUP BY status');const d=await db.query('SELECT count(*)::int count FROM actions WHERE approval_state=\'TEST_ONLY\'');res.json({cases_by_status:a.rows,duplicate_or_test_actions:d.rows[0]?.count||0});}

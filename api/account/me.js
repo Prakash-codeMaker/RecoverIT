@@ -1,0 +1,3 @@
+import { db } from 'hatchable';
+export const access='user'; export const methods=['GET'];
+export default async function(req,res){const c=await db.query('SELECT count(*)::int count FROM recovery_cases WHERE user_id=$1',[req.user.id]);const n=await db.query('SELECT count(*)::int count FROM notifications WHERE user_id=$1 AND read=false',[req.user.id]);res.json({user:req.user,stats:{cases:c.rows[0].count,unread:n.rows[0].count}});}

@@ -1,0 +1,1 @@
+CREATE TABLE feedback (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id text NOT NULL, case_id uuid REFERENCES recovery_cases(id) ON DELETE CASCADE, rating integer NOT NULL CHECK (rating BETWEEN 1 AND 5), comment text, created_at timestamptz NOT NULL DEFAULT now())

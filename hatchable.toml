@@ -1,0 +1,29 @@
+[auth]
+enabled = true
+providers = ["email", "google"]
+
+[ai]
+required = true
+
+[project]
+name = "RecoverIT"
+
+[db.tables.recovery_cases]
+read = "own"
+write = "own"
+
+[db.tables.evidence]
+read = "own"
+write = "own"
+
+[db.tables.notifications]
+read = "own"
+write = "own"
+
+[db.tables.notification_preferences]
+read = "own"
+write = "own"
+
+[db.tables.feedback]
+read = "own"
+write = "own"
