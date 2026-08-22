@@ -1,20 +1,15 @@
-import { db, auth } from 'hatchable';
+import { db } from 'hatchable';
 import { newCaseNumber, normalizeIssue, addEvent, addStep } from 'lib/case.js';
-export const access = 'member';
-export const methods = ['POST'];
+export const access='member'; export const methods=['POST'];
 export default async function(req,res){
-  const u=req.member; const b=req.body||{};
-  const issue=normalizeIssue(b.issue_type); const amount=Number(b.amount||0);
-  if(!b.description || !Number.isFinite(amount) || amount<0) return res.status(400).json({error:'Tell us what happened and enter a valid amount.'});
-  const caseNo=newCaseNumber();
-  const r=await db.query('INSERT INTO recovery_cases (case_number,user_id,issue_type,description,amount,currency,merchant_name,transaction_reference,payment_method,status,priority,confidence_score) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id,case_number,status,created_at',[caseNo,u.id,issue,b.description,amount,b.currency||'INR',b.merchant_name||null,b.transaction_reference||null,b.payment_method||null,'REPORTED',amount>=50000?'HIGH':'NORMAL',null]);
-  const c=r.rows[0];
-  await addEvent(c.id,'Case received','RecoverIT received your payment problem.','REPORTED','user');
-  await addStep(c.id,'understanding','Understanding your report','DONE');
-  await addStep(c.id,'payment','Checking payment information','RUNNING');
-  await addStep(c.id,'timeline','Reconstructing payment timeline','PENDING');
-  await addStep(c.id,'provider','Checking provider status','PENDING');
-  await addStep(c.id,'safe_path','Determining safest next step','PENDING');
-  await db.query('INSERT INTO notifications (user_id,case_id,type,title,description) VALUES ($1,$2,$3,$4,$5)',[u.id,c.id,'case_update','Case created',`Your case ${caseNo} is now being investigated.`]);
-  return res.status(201).json(c);
+ const u=req.member; const b=req.body||{}; const description=String(b.description||'').trim();
+ if(!description)return res.status(400).json({error:'Tell us what happened first.'});
+ const match=description.match(/(?:₹|rs\.?|inr)?\s*([0-9][0-9,]*(?:\.\d{1,2})?)/i); const amount=match?Number(match[1].replace(/,/g,'')):0;
+ const lower=description.toLowerCase(); const issue=lower.includes('refund')?normalizeIssue('refund_not_received'):lower.includes('twice')||lower.includes('duplicate')?normalizeIssue('duplicate_payment'):lower.includes('failed')&&/(deduct|debit|charged)/.test(lower)?normalizeIssue('payment_failed_deducted'):normalizeIssue('other');
+ const method=/\bupi\b/i.test(description)?'UPI':/\b(card|credit card|debit card)\b/i.test(description)?'Card':/\bnetbank/i.test(description)?'Netbanking':/\bwallet\b/i.test(description)?'Wallet':'Unknown';
+ const ref=(description.match(/\b(?:txn|transaction|utr|rrn|reference|ref)\s*(?:id|no|number|#)?\s*[:#-]?\s*([A-Z0-9_-]{6,})\b/i)||[])[1]||null;
+ const caseNo=newCaseNumber(); const r=await db.query('INSERT INTO recovery_cases (case_number,user_id,issue_type,description,amount,currency,merchant_name,transaction_reference,payment_method,status,priority,confidence_score) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id,case_number,status,created_at',[caseNo,u.id,issue,description,amount,'INR',null,ref,method,'REPORTED',amount>=50000?'HIGH':'NORMAL',null]);
+ const c=r.rows[0]; await addEvent(c.id,'Case received','Your story was captured. RecoverIT will now reconstruct what happened rather than making you complete a conventional form.','REPORTED','user');
+ await addStep(c.id,'understanding','Understanding your report','DONE','Story captured from voice/text.'); await addStep(c.id,'payment','Checking payment information','RUNNING'); await addStep(c.id,'timeline','Reconstructing payment timeline','PENDING'); await addStep(c.id,'provider','Checking provider status','PENDING'); await addStep(c.id,'safe_path','Determining safest next step','PENDING');
+ await db.query('INSERT INTO notifications (user_id,case_id,type,title,description) VALUES ($1,$2,$3,$4,$5)',[u.id,c.id,'case_update','Investigation started',`RecoverIT created ${caseNo} and is beginning the evidence-aware investigation.`]); res.status(201).json(c);
 }

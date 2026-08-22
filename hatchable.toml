@@ -8,6 +8,12 @@ required = true
 [project]
 name = "RecoverIT"
 
+[[secret]]
+key = "razorpay_webhook_secret"
+required = false
+expose = false
+description = "Razorpay webhook signing secret used to verify provider events."
+
 [db.tables.recovery_cases]
 read = "own"
 write = "own"
