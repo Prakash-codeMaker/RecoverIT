@@ -1,0 +1,3 @@
+import { db } from 'hatchable';
+export const access='user'; export const methods=['POST'];
+export default async function(req,res){const c=await db.query('SELECT id FROM recovery_cases WHERE id=$1 AND user_id=$2',[req.body?.case_id,req.user.id]);if(!c.rows[0])return res.status(404).json({error:'Case not found.'});res.json({verified:false,test_mode:true,status:'TEST_VERIFICATION_REQUIRED',message:'No real identity verification was performed.'});}

@@ -1,0 +1,3 @@
+import { db } from 'hatchable';
+export const access='user'; export const methods=['GET'];
+export default async function(req,res){const q=String(req.query?.q||'').trim();if(!q)return res.json({cases:[]});const like='%'+q+'%';const r=await db.query('SELECT id,case_number,issue_type,amount,currency,merchant_name,status,created_at FROM recovery_cases WHERE user_id=$1 AND (case_number ILIKE $2 OR merchant_name ILIKE $2 OR transaction_reference ILIKE $2 OR status ILIKE $2) ORDER BY created_at DESC LIMIT 20',[req.user.id,like]);res.json({cases:r.rows});}
