@@ -8,7 +8,7 @@
   pageEnter();
 
   const decorate=()=>{
-    const selectors='.section,.card,.stat,.story-card,.journey-item,.ledger,.case-row,.recovery-map,.invest-visual,.next-card,.timeline,.loginbox,.card2,.orb,.panel,.success,.test-banner,.modalbox';
+    const selectors='.card,.stat,.story-card,.journey-item,.ledger,.case-row,.recovery-map,.invest-visual,.next-card,.loginbox,.card2,.orb,.panel,.success,.test-banner,.modalbox,.case-visual,.case-proof-card';
     document.querySelectorAll(selectors).forEach((el,i)=>{
       if(!el.classList.contains('reveal')){
         el.classList.add('reveal');
