@@ -9,7 +9,7 @@
   async function boot(){
     if(!A||!A.getSession){showError('RecoverIT could not start','The authentication client was not available. Please refresh the page.');return;}
     let session;try{session=await A.getSession()}catch(e){showError('Session check failed',e.message||'Please refresh and sign in again.');return}
-    if(!session||!session.user){location.replace('/login?next='+encodeURIComponent('/app.html'));return;}
+    if(!session||!session.user){for(let i=0;i<12&&!session?.user;i++){await new Promise(r=>setTimeout(r,250));try{session=await A.getSession()}catch(e){}}if(!session||!session.user){location.replace('/login?next='+encodeURIComponent('/app.html'));return;}}
     try{
       const [account,casesData,notesData]=await Promise.all([getJson('/api/account/me'),getJson('/api/cases/list'),getJson('/api/notifications/list')]);
       const cases=Array.isArray(casesData.cases)?casesData.cases:[];const notes=Array.isArray(notesData.notifications)?notesData.notifications:[];const user=account.user||session.user;const active=cases.filter(x=>x.status!=='RESOLVED'&&x.status!=='FAILED').length;const attention=cases.filter(x=>x.status==='ACTION_REQUIRED').length;const resolved=cases.filter(x=>x.status==='RESOLVED').length;const unread=account.stats&&Number(account.stats.unread)||0;
