@@ -4,15 +4,85 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>RecoverIT — Payment recovery, handled.</title>
 <link rel="stylesheet" href="/theme.css"><link rel="stylesheet" href="/india-motion.css">
-<style>
-body{margin:0}.hero{min-height:720px;display:grid;grid-template-columns:1.05fr .95fr;align-items:center;gap:70px;padding:80px 0}.eyebrow{font-size:12px;letter-spacing:.18em;font-weight:800;color:#9aa3ad;margin-bottom:18px}.hero h1{font-size:clamp(48px,6vw,86px);line-height:.98;letter-spacing:-.055em;margin:0 0 28px}.hero h1 span{color:#b9f36b}.hero p{max-width:650px;font-size:19px;line-height:1.65;color:#9aa3ad}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}.btn{display:inline-flex;align-items:center;justify-content:center;padding:14px 19px;border-radius:12px;text-decoration:none;font-weight:750}.btn.primary{background:#b9f36b;color:#071008}.btn.ghost{border:1px solid #30363d;color:#f4f6f8}.visual{position:relative;min-height:520px;border:1px solid #252b31;border-radius:28px;background:radial-gradient(circle at 50% 50%,#1c251b 0,#0e1113 42%,#090b0d 76%);overflow:hidden}.orbit{position:absolute;inset:90px;border:1px solid #313a32;border-radius:50%;animation:spin 18s linear infinite}.orbit.two{inset:150px;animation-duration:25s;animation-direction:reverse}.core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:150px;height:150px;border-radius:50%;display:grid;place-items:center;text-align:center;background:#121713;border:1px solid #52624d;box-shadow:0 0 80px #8cb65d22}.core strong{font-size:20px}.core small{color:#9aa3ad}.node{position:absolute;padding:14px 17px;border:1px solid #30363d;background:#111519e8;backdrop-filter:blur(8px);border-radius:14px;color:#9aa3ad;font-size:12px;line-height:1.45;box-shadow:0 15px 40px #0008}.node b{color:#f4f6f8;font-size:15px}.n1{top:75px;left:48px}.n2{top:80px;right:45px}.n3{bottom:95px;left:48px}.n4{bottom:90px;right:45px}.status{position:absolute;bottom:25px;left:50%;transform:translateX(-50%);white-space:nowrap;color:#b9f36b;font-size:11px;font-weight:800;letter-spacing:.12em}.section{padding:120px 0}.story{display:grid;grid-template-columns:.8fr 1.2fr;gap:80px}.sticky{position:sticky;top:100px;height:max-content}.section h2{font-size:clamp(38px,5vw,64px);line-height:1;letter-spacing:-.045em;margin:0 0 20px}.muted{color:#89939d;line-height:1.65}.story-card{padding:34px 0;border-top:1px solid #252b31}.story-card .num{color:#b9f36b;font-size:12px;font-weight:800;letter-spacing:.14em}.story-card h3{font-size:27px;margin:12px 0 7px}.center{text-align:center;max-width:760px;margin:auto}.diagram{display:flex;justify-content:center;align-items:center;gap:18px;flex-wrap:wrap}.diagram>div{padding:24px 28px;border:1px solid #30363d;border-radius:16px;background:#111519;text-align:center}.footer{border-top:1px solid #252b31;padding:28px 0;color:#747d87;font-size:13px}.shell{width:min(1180px,calc(100% - 40px));margin:auto}.nav{height:78px;display:flex;align-items:center;justify-content:space-between}.brand{color:#f4f6f8;text-decoration:none;font-size:22px;font-weight:850}.brand i{display:inline-block;width:7px;height:7px;background:#b9f36b;border-radius:50%;margin-left:5px}.navlinks{display:flex;gap:28px}.navlinks a{color:#8d969f;text-decoration:none;font-size:14px}.navlinks a:hover{color:#fff}@keyframes spin{to{transform:rotate(360deg)}}@media(max-width:800px){.hero{grid-template-columns:1fr;padding:55px 0}.visual{min-height:430px}.story{grid-template-columns:1fr;gap:35px}.sticky{position:static}.navlinks{display:none}.hero h1{font-size:50px}.n1,.n3{left:18px}.n2,.n4{right:18px}.orbit{inset:70px}.orbit.two{inset:120px}}
-</style>
 </head>
 <body>
 <div class="shell">
-<nav class="nav"><a class="brand" href="/">RecoverIT<i></i></a><div class="navlinks"><a href="#how">How it works</a><a href="#protection">Protection</a><a href="/test-mode.html">Test Mode</a></div><a class="btn primary" id="authCta" href="/login">Get started</a></nav>
-<section class="hero"><div><div class="eyebrow">PAYMENT RECOVERY, REIMAGINED</div><h1>Payment went wrong?<br><span>RecoverIT takes it from here.</span></h1><p>RecoverIT investigates payment and refund problems, reconstructs what happened, finds the safest next step, and keeps you updated until the issue is resolved.</p><div class="actions"><a class="btn primary" href="/report.html">Resolve a payment issue →</a><a class="btn ghost" href="#how">See how it works</a></div></div><div class="visual india-scene"><div class="motion-label">LIVE RECOVERY ROUTE · INDIA</div><div class="scene-copy"><strong>Real-world payment journeys</strong><span>people · places · providers · proof</span></div><div class="skyline"><span class="building b1"><i class="window w1"></i></span><span class="building b2"><i class="window w2"></i></span><span class="building b3"><i class="window w3"></i></span><span class="building b4"><i class="window w4"></i></span><span class="building b5"><i class="window w5"></i></span></div><div class="metro-line"></div><div class="metro"></div><div class="tree t1"></div><div class="tree t2"></div><div class="road"></div><div class="route"></div><div class="route-dot"></div><div class="auto"><span class="wheel a"></span><span class="wheel b"></span></div><div class="scooter"></div><div class="person p1"></div><div class="person p2"></div><div class="chai"></div><div class="node n1">Payment<br><b>₹2,499</b></div><div class="node n2">Provider<br><b>checking</b></div><div class="node n3">Refund<br><b>pending</b></div><div class="node n4">Timeline<br><b>rebuilding</b></div><div class="core"><div><strong>RecoverIT</strong><br><small>investigating</small></div></div><div class="status">SAFE PATH FOUND · TRACKING</div><div class="grain"></div></div></section>
-<section class="section" id="how"><div class="story"><div class="sticky"><div class="eyebrow">FROM PROBLEM TO RESOLUTION</div><h2>One problem.<br>One clear story.</h2><p class="muted">The interface stays calm while the investigation underneath handles the complexity.</p></div><div><article class="story-card"><div class="num">01</div><h3>Something went wrong.</h3><p class="muted">A payment succeeds, an order fails, or a refund disappears into the gap.</p></article><article class="story-card"><div class="num">02</div><h3>Something doesn’t match.</h3><p class="muted">Merchant, gateway and payment evidence can disagree. RecoverIT keeps uncertainty visible.</p></article><article class="story-card"><div class="num">03</div><h3>We reconstruct what happened.</h3><p class="muted">Events are normalized into one payment timeline so the case has a defensible story.</p></article><article class="story-card"><div class="num">04</div><h3>We decide what is safe.</h3><p class="muted">AI can investigate and explain. Deterministic policy owns money movement.</p></article><article class="story-card"><div class="num">05</div><h3>We stop duplicate actions.</h3><p class="muted">The Action Ledger makes money-adjacent actions idempotent and concurrency-safe.</p></article><article class="story-card"><div class="num">06</div><h3>You only hear when it matters.</h3><p class="muted">RecoverIT tracks the case and surfaces the next useful thing instead of making you chase it.</p></article></div></div></section>
-<section class="section" id="protection"><div class="center"><div class="eyebrow">THE KILLER MOMENT</div><h2>AI investigates.<br><span style="color:#b9f36b">Rules protect your money.</span></h2><p class="muted">A matching refund already exists. A second refund request arrives. The ledger wins.</p></div><div style="height:35px"></div><div class="diagram"><div>Existing<br>refund</div><b>→</b><div>Action<br>Ledger</div><b>→</b><div>DUPLICATE<br><strong style="color:#b9f36b">BLOCKED</strong></div></div></section>
-</div><footer class="footer"><div class="shell" style="display:flex;justify-content:space-between;gap:20px"><span>RecoverIT · Payment recovery, handled.</span><span>TEST MODE protects the demo from real money movement.</span></div></footer><script>(async function(){try{const s=await window.hatchable.auth.getSession();const c=document.getElementById('authCta');if(s&&s.user){c.textContent='Dashboard →';c.href='/app.html';}}catch(e){}})();</script>
+<nav class="nav">
+  <a class="brand" href="/">RecoverIT<i></i></a>
+  <div class="navlinks"><a href="#how">How it works</a><a href="#protection">Protection</a><a href="/test-mode.html">Test Mode</a></div>
+  <a class="btn primary" id="authCta" href="/login">Get started</a>
+</nav>
+
+<header class="hero">
+  <div class="hero-copy reveal">
+    <div class="eyebrow">PAYMENT RECOVERY · INDIA-NATIVE</div>
+    <h1>When money<br>goes <em>missing.</em><br>We follow it.</h1>
+    <p class="hero-lede">RecoverIT investigates payment and refund problems, reconstructs what happened, finds the safest next step, and keeps the case moving until it is resolved.</p>
+    <div class="actions hero-meta"><a class="btn primary" href="/report.html">Resolve a payment issue →</a><a class="btn ghost" href="#how">See the journey</a></div>
+    <div class="hero-meta"><span class="micro"><b>UPI</b> · cards · bank rails · merchant systems</span><span class="micro">AI investigation + deterministic money protection</span></div>
+  </div>
+  <div class="hero-visual reveal delay1">
+    <div class="photo-stage"><img src="/india/mumbai-rickshaws.jpg" alt="Rickshaws moving through Mumbai" data-parallax=".035"><div class="wash"></div></div>
+    <div class="scene-tag">MUMBAI · DAILY MOVEMENT</div>
+    <div class="scene-caption"><h3>Payments live in the real world.</h3><p>A customer, a merchant, a gateway, a bank — one transaction can cross several systems before anyone notices it went wrong.</p></div>
+    <div class="payment-float"><div class="eyebrow">RECOVERY SIGNAL</div><div class="amount">₹2,499</div><div class="state"><span>REFUND</span><b>RECONSTRUCTING</b></div><div class="signal-bars"><i></i><i></i><i></i><i></i><i></i></div></div>
+    <div class="route-line"></div><div class="route-dot"></div><div class="ticker">CASE 04F8 · EVIDENCE → TIMELINE → SAFE ACTION</div>
+  </div>
+</header>
+
+<section class="section section-tight" id="why">
+  <div class="intro-grid">
+    <div class="section-head reveal"><div class="eyebrow">NOT ANOTHER PAYMENT DASHBOARD</div><h2>India pays at the speed of life.</h2><p class="muted">A scan at a kirana. A QR at a café. A card at checkout. A refund that says “done” while the money never arrives. RecoverIT is built around the messy hand-offs underneath those moments.</p></div>
+    <div class="reveal delay1"><div class="signal-panel"><div><strong>One payment. Many truths.</strong><div class="micro" style="margin-top:7px">merchant · gateway · bank · customer</div></div><span>RECOVERIT NORMALIZES THE STORY</span></div></div>
+  </div>
+  <div class="image-collage">
+    <div class="collage-card reveal"><img src="/india/delhi-metro.jpg" alt="People boarding a Delhi Metro train" loading="lazy" data-parallax=".02"><div class="collage-label">DELHI · MOVEMENT / MANY ACTORS</div></div>
+    <div class="collage-card small reveal delay2"><img src="/india/indian-market.jpg" alt="Indian street market" loading="lazy"><div class="collage-label">INDIA · EVERYDAY COMMERCE</div></div>
+  </div>
+</section>
+
+<section class="section" id="how">
+  <div class="story">
+    <div class="sticky reveal"><div class="eyebrow">FROM PROBLEM TO RESOLUTION</div><h2>One problem.<br>One clear story.</h2><p class="muted">The interface stays calm while the investigation underneath handles the complexity.</p><div class="motion-chips"><span class="chip">listen</span><span class="chip">normalize</span><span class="chip">verify</span><span class="chip">protect</span></div></div>
+    <div class="story-list">
+      <article class="story-card reveal"><div class="num">01 / THE MOMENT</div><h3>Something went wrong.</h3><p class="muted">A payment succeeds, an order fails, or a refund disappears into the gap. RecoverIT starts with the customer's story instead of forcing them through a maze of fields.</p><div class="proof"><span class="chip">voice / text</span><span class="chip">natural language</span></div></article>
+      <article class="story-card reveal delay1"><div class="num">02 / THE MISMATCH</div><h3>Something doesn't match.</h3><p class="muted">Merchant, gateway and payment evidence can disagree. RecoverIT keeps uncertainty visible instead of pretending the first signal is the truth.</p><div class="proof"><span class="chip">payment events</span><span class="chip">refund state</span><span class="chip">merchant evidence</span></div></article>
+      <article class="story-card reveal delay1"><div class="num">03 / THE RECONSTRUCTION</div><h3>We rebuild what actually happened.</h3><p class="muted">Events are normalized into one payment timeline so the case has a defensible story — what happened, when it happened, and what remains unknown.</p><div class="proof"><span class="chip">timeline</span><span class="chip">evidence graph</span><span class="chip">confidence</span></div></article>
+      <article class="story-card reveal delay2"><div class="num">04 / THE DECISION</div><h3>AI investigates. Rules decide what is safe.</h3><p class="muted">AI can investigate, summarize and explain. Deterministic policy owns money movement, so a plausible answer can never silently become a risky action.</p><div class="proof"><span class="chip">AI reasoning</span><span class="chip">policy gate</span></div></article>
+      <article class="story-card reveal delay2"><div class="num">05 / THE PROTECTION</div><h3>We stop duplicate actions.</h3><p class="muted">The Action Ledger makes money-adjacent actions idempotent and concurrency-safe. If a refund already exists, the second action does not get to win.</p><div class="proof"><span class="chip">idempotency</span><span class="chip">action ledger</span><span class="chip">duplicate blocked</span></div></article>
+      <article class="story-card reveal delay3"><div class="num">06 / THE HANDOFF</div><h3>You only hear when it matters.</h3><p class="muted">RecoverIT tracks the case and surfaces the next useful thing instead of making you chase gateways, merchants or support queues.</p><div class="proof"><span class="chip">live updates</span><span class="chip">next step</span></div></article>
+    </div>
+  </div>
+</section>
+
+<section class="section section-tight" id="protection">
+  <div class="ledger reveal">
+    <div class="ledger-bg"></div>
+    <div class="eyebrow">THE KILLER MOMENT</div>
+    <h2>AI can be curious.<br>Your money can't be.</h2>
+    <p class="ledger-sub">A matching refund already exists. A second refund request arrives. The investigation can understand the situation — but the ledger owns the final action.</p>
+    <div class="ledger-stack">
+      <div class="ledger-row"><span>PAYMENT</span><strong>₹2,499 · captured</strong></div>
+      <div class="ledger-row"><span>REFUND #1</span><strong>₹2,499 · already issued</strong></div>
+      <div class="ledger-row"><span>AI PROPOSAL</span><strong>issue another refund</strong></div>
+      <div class="ledger-row blocked"><span>LEDGER DECISION</span><strong>✓ DUPLICATE BLOCKED</strong></div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-tight">
+  <div class="journey-band">
+    <div class="journey-item reveal"><span class="index">01</span><h3>Listen</h3><p>Start with what the person actually experienced.</p></div>
+    <div class="journey-item reveal delay1"><span class="index">02</span><h3>Reconstruct</h3><p>Turn scattered signals into one payment timeline.</p></div>
+    <div class="journey-item reveal delay2"><span class="index">03</span><h3>Protect</h3><p>Gate money movement with deterministic policy.</p></div>
+    <div class="journey-item reveal delay3"><span class="index">04</span><h3>Resolve</h3><p>Keep the case moving until the next useful action is clear.</p></div>
+  </div>
+</section>
+
+<section class="cta reveal"><div class="eyebrow">PAYMENT RECOVERY, HANDLED.</div><h2>Stop chasing the payment.</h2><p>Tell RecoverIT what happened. We will build the case, investigate the evidence, protect the action and keep you updated.</p><div class="actions"><a class="btn primary" href="/report.html">Start a recovery case →</a><a class="btn ghost" href="/test-mode.html">Explore Test Mode</a></div></section>
+
+<footer class="footer"><div class="footer-inner"><span>RecoverIT · Payment recovery, handled.</span><span>TEST MODE protects the demo from real money movement.</span></div><div class="credit">Photography: Wikimedia Commons — Mumbai rickshaw image (public domain); Delhi Metro Station image and Indian street market image used under their respective Creative Commons licenses.</div></footer>
+</div>
+<script src="/motion.js"></script>
+<script>(async function(){try{const s=await window.hatchable.auth.getSession();const c=document.getElementById('authCta');if(s&&s.user){c.textContent='Dashboard →';c.href='/app.html';}}catch(e){}})();</script>
 </body></html>
