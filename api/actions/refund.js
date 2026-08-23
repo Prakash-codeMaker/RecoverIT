@@ -1,8 +1,8 @@
 import { db } from 'hatchable';
 import { getCase, addEvent } from 'lib/case.js';
-export const access='member'; export const methods=['POST'];
+export const access='user'; export const methods=['POST'];
 export default async function(req,res){
- const c=await getCase(req.body?.case_id,req.member.id); if(!c)return res.status(404).json({error:'Case not found.'});
+ const c=await getCase(req.body?.case_id,req.user.id); if(!c)return res.status(404).json({error:'Case not found.'});
  const key=`refund:${c.id}:${c.amount}`;
  const existing=await db.query('SELECT action_id,resulting_state,verification_state FROM actions WHERE idempotency_key=$1',[key]);
  if(existing.rows[0]){ await addEvent(c.id,'Duplicate action blocked','An existing refund action matches this payment. RecoverIT did not initiate another refund.','ACTION_REQUIRED','Action Ledger'); return res.status(409).json({blocked:true,reason:'DUPLICATE_ACTION',action:existing.rows[0]}); }

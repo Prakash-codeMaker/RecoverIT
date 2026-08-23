@@ -1,3 +1,3 @@
 import { db } from 'hatchable';
-export const access='member'; export const methods=['POST'];
-export default async function(req,res){const b=req.body||{};const rating=Number(b.rating);if(!rating||rating<1||rating>5)return res.status(400).json({error:'Rating must be 1 to 5.'});await db.query('INSERT INTO feedback (user_id,case_id,rating,comment) VALUES ($1,$2,$3,$4)',[req.member.id,b.case_id||null,rating,b.comment||null]);res.status(201).json({ok:true});}
+export const access='user'; export const methods=['POST'];
+export default async function(req,res){const b=req.body||{};const rating=Number(b.rating);if(!rating||rating<1||rating>5)return res.status(400).json({error:'Rating must be 1 to 5.'});await db.query('INSERT INTO feedback (user_id,case_id,rating,comment) VALUES ($1,$2,$3,$4)',[req.user.id,b.case_id||null,rating,b.comment||null]);res.status(201).json({ok:true});}

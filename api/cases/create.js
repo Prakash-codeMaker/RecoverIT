@@ -1,8 +1,8 @@
 import { db } from 'hatchable';
 import { newCaseNumber, normalizeIssue, addEvent, addStep } from 'lib/case.js';
-export const access='member'; export const methods=['POST'];
+export const access='user'; export const methods=['POST'];
 export default async function(req,res){
- const u=req.member; const b=req.body||{}; const description=String(b.description||'').trim();
+ const u=req.user; const b=req.body||{}; const description=String(b.description||'').trim();
  if(!description)return res.status(400).json({error:'Tell us what happened first.'});
  const match=description.match(/(?:₹|rs\.?|inr)?\s*([0-9][0-9,]*(?:\.\d{1,2})?)/i); const amount=match?Number(match[1].replace(/,/g,'')):0;
  const lower=description.toLowerCase(); const issue=lower.includes('refund')?normalizeIssue('refund_not_received'):lower.includes('twice')||lower.includes('duplicate')||lower.includes('double charged')?normalizeIssue('duplicate_payment'):lower.includes('failed')&&/(deduct|debit|charged)/.test(lower)?normalizeIssue('payment_failed_deducted'):lower.includes('stuck')||lower.includes('pending')||lower.includes('processing for')?normalizeIssue('payment_stuck'):lower.includes('reversed')||lower.includes('reversal')?normalizeIssue('payment_reversed'):lower.includes('unrecognized')||lower.includes('unknown payment')||lower.includes('not mine')||lower.includes('unauthorised')||lower.includes('unauthorized')?normalizeIssue('unrecognized_payment'):normalizeIssue('other');

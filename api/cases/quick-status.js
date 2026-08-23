@@ -1,7 +1,7 @@
 import { db } from 'hatchable';
-export const access='member'; export const methods=['GET'];
+export const access='user'; export const methods=['GET'];
 export default async function(req,res){
- const u=req.member; const id=String(req.query?.case_id||'');
+ const u=req.user; const id=String(req.query?.case_id||'');
  const params=id?[id,u.id]:[u.id];
  const sql=id
   ? `SELECT rc.id,rc.case_number,rc.status,rc.issue_type,rc.description,rc.amount,rc.currency,rc.payment_method,rc.merchant_name,rc.transaction_reference,rc.confidence_score,rc.created_at,rc.updated_at,COALESCE((SELECT json_agg(json_build_object('step_key',s.step_key,'title',s.title,'status',s.status,'detail',s.detail,'created_at',s.created_at,'completed_at',s.completed_at) ORDER BY s.created_at ASC) FROM investigation_steps s WHERE s.case_id=rc.id),'[]'::json) AS steps FROM recovery_cases rc WHERE rc.id=$1 AND rc.user_id=$2 LIMIT 1`

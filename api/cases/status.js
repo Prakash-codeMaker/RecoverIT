@@ -1,7 +1,7 @@
 import { db } from 'hatchable';
-export const access='member'; export const methods=['GET'];
+export const access='user'; export const methods=['GET'];
 export default async function(req,res){
- const u=req.member; const id=String(req.query?.case_id||'');
+ const u=req.user; const id=String(req.query?.case_id||'');
  const params=id?[id,u.id]:[u.id];
  const sql=id?'SELECT id,case_number,status,issue_type,description,amount,currency,payment_method,merchant_name,transaction_reference,confidence_score,created_at,updated_at FROM recovery_cases WHERE id=$1 AND user_id=$2':'SELECT id,case_number,status,issue_type,description,amount,currency,payment_method,merchant_name,transaction_reference,confidence_score,created_at,updated_at FROM recovery_cases WHERE user_id=$1 ORDER BY created_at DESC LIMIT 1';
  const r=await db.query(sql,params); if(!r.rows[0])return res.status(404).json({error:'Case not found.'});
