@@ -62,7 +62,20 @@
     const activeIndex = Math.max(0, steps.findIndex((s) => s.status === 'RUNNING'));
     const guidance = waiting
       ? (data.guidance || 'We need one more thing from you.')
-      : (current?.detail || data.guidance || 'RecoverIT is checking the evidence now.');
+      : (current?.detail || data.guidance || 'RecoverIT AI is checking the evidence now.');
+    const ai = data.ai || {};
+    const aiFindings = Array.isArray(ai.findings) ? ai.findings : [];
+    const aiNext = Array.isArray(ai.next_steps) ? ai.next_steps : [];
+    const aiReport = ai.ready ? `
+      <section class="ai-report reveal in">
+        <div class="ai-report-head">
+          <div><div class="eyebrow">AI INVESTIGATION</div><h2>What RecoverIT AI found</h2></div>
+          <div class="ai-confidence"><span>CONFIDENCE</span><strong>${ai.confidence == null ? '—' : Math.round(Number(ai.confidence)) + '%'}</strong></div>
+        </div>
+        <p class="ai-summary">${esc(ai.summary || 'The investigation is still processing.')}</p>
+        ${aiFindings.length ? `<div class="ai-findings">${aiFindings.slice(0,8).map(f=>`<div class="ai-finding ${esc(f.status || 'unknown')}"><i></i><span>${esc(f.text || f.value || '')}</span><small>${esc(f.status || 'unknown')}</small></div>`).join('')}</div>` : ''}
+        ${aiNext.length ? `<div class="ai-next"><div class="eyebrow">SAFEST NEXT ACTIONS</div>${aiNext.slice(0,5).map((x,i)=>`<div class="ai-action"><b>0${i+1}</b><span>${esc(x)}</span></div>`).join('')}</div>` : ''}
+      </section>` : '';
 
     const stepNodes = steps.map((step, index) => {
       const state = step.status === 'DONE' ? 'done' : step.status === 'RUNNING' ? 'active' : '';
@@ -107,6 +120,8 @@
           <p>${esc(guidance)}</p>
         </div>
       </div>
+
+      ${aiReport}
 
       <div class="mini-journey">
         <div class="mini-head"><span>CASE JOURNEY</span><small>Updates automatically</small></div>
