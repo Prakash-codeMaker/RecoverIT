@@ -1,4 +1,5 @@
 import { db, scheduler, email } from 'hatchable';
+import { syncResolutionState } from 'lib/resolution.js';
 
 export const access='scheduler';
 export const methods=['POST'];
@@ -49,6 +50,7 @@ export default async function(req,res){
     ORDER BY c.updated_at ASC,c.id ASC LIMIT $3`,[cursorTime,cursorId,BATCH]);
   let queued=0;
   for(const row of active.rows){
+    try{await syncResolutionState(row.id)}catch(_){/* resolution state must never block case monitoring */}
     await sendCaseUpdate(row);
     if(row.status==='WAITING_FOR_USER') await sendAttentionEmail(row);
     if(row.identity_status!=='VERIFIED_ACCOUNT') continue;
