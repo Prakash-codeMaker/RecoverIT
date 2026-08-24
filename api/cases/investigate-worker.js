@@ -57,7 +57,7 @@ async function aiInvestigate(c,step,evidence,provider,previous){
 
 CASE DATA:\n${JSON.stringify(facts)}\n\nReturn ONLY valid JSON matching this shape:\n${schema}`;
   try{
-    const out=await ai.generateText({model:'sonnet',prompt,purpose:'payment-investigation',userId:c.user_id,maxTokens:1400});
+    const out=await ai.generateText({model:'gemini-flash',prompt,purpose:'payment-investigation',userId:c.user_id,maxTokens:1400});
     const parsed=extractJson(out.text);
     if(!parsed)throw new Error('AI returned invalid investigation JSON.');
     return parsed;
@@ -120,11 +120,16 @@ export default async function(req,res){
 
   const result=await aiInvestigate(c,key,evidence,provider,previous);
   if(result.available===false){
-    await db.query('UPDATE recovery_cases SET status=$1,ai_status=$2,ai_summary=$3,ai_findings=$4::jsonb,ai_next_steps=$5::jsonb,ai_confidence=NULL,confidence_score=NULL,updated_at=now() WHERE id=$6',['INVESTIGATING','UNAVAILABLE',cleanText(result.summary,5000),'[]','["RecoverIT will retry the investigation automatically. If available, provide the transaction/reference number or provider response."]',c.id]);
-    await setStep(c.id,key,'RUNNING','The reasoning service is temporarily unavailable. RecoverIT will retry automatically; no unsupported payment state has been assumed.');
-    await addEvent(c.id,'AI retry scheduled','The reasoning service did not return a reliable result. RecoverIT is keeping the investigation open and will retry automatically.','INVESTIGATING','RecoverIT');
-    await notify(c.user_id,c.id,'Investigation retry scheduled','RecoverIT could not complete this AI reasoning pass. No payment state was assumed, and the investigation will retry automatically.');
-    return res.json({ok:true,status:'INVESTIGATING',step:key,retry:true});
+    const missingReference=!String(c.transaction_reference||'').trim();
+    const missingProof=evidence.length===0;
+    const needsEvidence=missingReference&&missingProof;
+    const message=needsEvidence ? 'We captured your story, but we cannot verify the ₹500 request yet. Upload a screenshot, receipt, invoice, provider message, or provide the UTR/RRN/transaction reference. We will continue automatically once we have a verifiable signal.' : missingReference ? 'We reviewed the available information, but provider reconciliation needs the UTR/RRN/transaction reference or provider response. Add it and RecoverIT will continue automatically.' : 'The AI reasoning service did not return a reliable result. RecoverIT has not assumed any unsupported payment state and will retry automatically.';
+    const nextSteps=needsEvidence ? ['Upload proof of the ₹500 request or provide the UTR/RRN/transaction reference.','If the Jio Store gave you a message, invoice, receipt, or written explanation, add that too.'] : [message];
+    await db.query('UPDATE recovery_cases SET status=$1,ai_status=$2,ai_summary=$3,ai_findings=$4::jsonb,ai_next_steps=$5::jsonb,ai_confidence=NULL,confidence_score=NULL,updated_at=now() WHERE id=$6',[needsEvidence?'WAITING_FOR_USER':'INVESTIGATING','UNAVAILABLE',message,JSON.stringify([{text:'The reported ₹500 request has not been independently verified.',status:'reported'},{text:'RecoverIT will not label the charge valid or invalid without supporting evidence.',status:'unknown'}]),JSON.stringify(nextSteps),c.id]);
+    await setStep(c.id,key,needsEvidence?'DONE':'RUNNING',message);
+    await addEvent(c.id,needsEvidence?'Evidence needed':'AI retry scheduled',message,needsEvidence?'WAITING_FOR_USER':'INVESTIGATING','RecoverIT');
+    await notify(c.user_id,c.id,needsEvidence?'Proof needed to verify the ₹500 request':'Investigation retry scheduled',message);
+    return res.json({ok:true,status:needsEvidence?'WAITING_FOR_USER':'INVESTIGATING',step:key,retry:!needsEvidence});
   }
   const summary=cleanText(result.summary,5000);
   const findings=Array.isArray(result.findings)?result.findings.slice(0,10):Array.isArray(result.facts)?result.facts.slice(0,10):[];

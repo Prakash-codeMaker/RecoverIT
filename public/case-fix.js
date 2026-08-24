@@ -72,7 +72,15 @@
     const identityCard = identityVerified ? `
       <section class="identity-card verified"><div><div class="eyebrow">ACCOUNT VERIFIED</div><strong>RecoverIT verified your signed-in account.</strong><p>Your investigation can continue using this account identity.</p></div><span>✓</span></section>` : `
       <section class="identity-card"><div><div class="eyebrow">IDENTITY CHECK</div><strong>Verify your RecoverIT account details.</strong><p>We verify the signed-in account before treating case information as identity-linked evidence.</p></div><button class="btn primary" id="verifyIdentity" type="button">Verify details →</button><div class="identity-status" id="identityStatus"></div></section>`;
-    const aiReport = ai.ready ? `
+    const aiNeedsEvidence = ai.status === 'UNAVAILABLE' && waiting;
+    const aiReport = aiNeedsEvidence ? `
+      <section class="ai-report ai-evidence-needed reveal in">
+        <div class="eyebrow">AI INVESTIGATION</div>
+        <h2>We need one verifiable signal</h2>
+        <p class="ai-summary">${esc(ai.summary || 'We captured your story, but we cannot verify the reported request yet. RecoverIT will not assume the charge is valid or invalid without supporting evidence.')}</p>
+        <div class="ai-findings"><div class="ai-finding reported"><i></i><span>The ₹500 request is currently a reported claim, not a verified payment fact.</span><small>reported</small></div><div class="ai-finding unknown"><i></i><span>RecoverIT needs evidence showing what the Jio Store requested and why.</span><small>unknown</small></div></div>
+        <div class="ai-next"><div class="eyebrow">WHAT TO PROVIDE</div><div class="ai-action"><b>01</b><span>Upload a screenshot, receipt, invoice, provider message, or other proof of the ₹500 request.</span></div><div class="ai-action"><b>02</b><span>If you have a UTR, RRN, transaction ID, or written explanation from the store, add that too.</span></div></div>
+      </section>` : ai.ready ? `
       <section class="ai-report reveal in">
         <div class="ai-report-head">
           <div><div class="eyebrow">AI INVESTIGATION</div><h2>What RecoverIT AI found</h2></div>
