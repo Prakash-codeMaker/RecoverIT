@@ -130,11 +130,45 @@
 
       <div class="next-card">
         <div><div class="eyebrow">YOUR NEXT STEP</div><h3>${esc(waiting ? (data.guidance || 'We need one more thing from you.') : (data.guidance || 'Nothing needed right now.'))}</h3></div>
-        <div class="next-arrow">→</div>
+        ${waiting ? '<button class="next-action" id="nextStepButton" type="button">Add details <span>→</span></button>' : '<div class="next-arrow">→</div>'}
       </div>
+      ${waiting ? `<div class="context-modal" id="contextModal" aria-hidden="true"><div class="context-backdrop" data-close-context></div><section class="context-dialog" role="dialog" aria-modal="true" aria-labelledby="contextTitle"><button class="context-close" id="contextClose" type="button" aria-label="Close">×</button><div class="eyebrow">CONTINUE THE INVESTIGATION</div><h2 id="contextTitle">Give RecoverIT one more signal.</h2><p class="muted">Add the transaction/reference number or paste the provider's response. You can also attach new proof. RecoverIT will immediately re-run the AI reconciliation.</p><label>Transaction / reference number<input id="contextReference" autocomplete="off" placeholder="e.g. UTR, RRN, transaction ID"></label><label>Provider / merchant response<textarea id="contextResponse" rows="5" placeholder="Paste the message, email, or response you received…"></textarea></label><label class="context-upload">Add new proof<input id="contextFile" type="file" accept="image/jpeg,image/png,image/webp,application/pdf,video/mp4"><span>Receipt, bank statement, refund message, screenshot or video</span></label><div class="context-actions"><button class="btn" id="contextCancel" type="button">Not now</button><button class="btn primary" id="contextSubmit" type="button">Send to RecoverIT AI →</button></div><div class="context-status" id="contextStatus"></div></section></div>` : ''}
 
       <div class="proof-line"><span>${evidence.length} proof file${evidence.length === 1 ? '' : 's'}</span><span>Evidence is checked as new information arrives</span></div>
     `;
+
+    const open = document.getElementById('nextStepButton');
+    const modal = document.getElementById('contextModal');
+    const close = () => { if (modal) { modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true'); } };
+    if (open && modal) {
+      open.onclick = () => { modal.classList.add('open'); modal.setAttribute('aria-hidden', 'false'); setTimeout(() => document.getElementById('contextReference')?.focus(), 80); };
+      document.getElementById('contextClose')?.addEventListener('click', close);
+      document.getElementById('contextCancel')?.addEventListener('click', close);
+      modal.querySelector('[data-close-context]')?.addEventListener('click', close);
+      document.getElementById('contextSubmit')?.addEventListener('click', async () => {
+        const button = document.getElementById('contextSubmit');
+        const status = document.getElementById('contextStatus');
+        const reference = document.getElementById('contextReference')?.value.trim() || '';
+        const providerResponse = document.getElementById('contextResponse')?.value.trim() || '';
+        const file = document.getElementById('contextFile')?.files?.[0];
+        if (!reference && !providerResponse && !file) { status.textContent = 'Add a reference, provider response, or proof first.'; return; }
+        button.disabled = true; button.textContent = 'Sending to AI…'; status.textContent = 'RecoverIT is updating the case and restarting reconciliation.';
+        try {
+          const context = await request('/api/cases/add-context', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ case_id: caseId, transaction_reference: reference, provider_response: providerResponse }) }, 8000);
+          if (!context.response.ok) throw new Error(context.data?.error || 'Could not update the case.');
+          if (file) {
+            const fd = new FormData(); fd.append('case_id', caseId); fd.append('file', file);
+            const upload = await request('/api/evidence/upload', { method: 'POST', body: fd }, 12000);
+            if (!upload.response.ok) throw new Error(upload.data?.error || 'The proof could not be uploaded.');
+          }
+          close();
+          await load();
+        } catch (error) {
+          status.textContent = error.message || 'Something went wrong. Please try again.';
+          button.disabled = false; button.textContent = 'Send to RecoverIT AI →';
+        }
+      });
+    }
   }
 
   async function getCase(id) {
