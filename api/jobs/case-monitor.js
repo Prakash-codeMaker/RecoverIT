@@ -30,6 +30,16 @@ async function notifyUser(row,title,description,sendEmail=true){
   }
 }
 
+async function sendAttentionEmail(row){
+  if(!row.email)return;
+  const recent=await db.query('SELECT id FROM notifications WHERE user_id=$1 AND case_id=$2 AND type=$3 AND created_at>now()-interval \'24 hours\' LIMIT 1',[row.user_id,row.id,'case_attention']);
+  if(recent.rows[0])return;
+  const title='Your RecoverIT case needs attention';
+  const description='RecoverIT has reached a point where your case needs information or an action from you. Open the case to see exactly what is required.';
+  await db.query('INSERT INTO notifications (user_id,case_id,type,title,description) VALUES ($1,$2,$3,$4,$5)',[row.user_id,row.id,'case_attention',title,description]);
+  try{await email.send({to:row.email,subject:`RecoverIT · Action needed for ${row.case_number}`,html:`<div style="font-family:Arial,sans-serif;max-width:620px"><p style="letter-spacing:.08em;font-size:12px;color:#667">RECOVERIT</p><h2>Your case needs attention</h2><p>${description}</p><p><a href="https://recoverit.hatchable.site/case.html?case_id=${encodeURIComponent(row.id)}" style="display:inline-block;padding:12px 18px;border-radius:10px;background:#111;color:#fff;text-decoration:none">Review case</a></p><p style="color:#667;font-size:12px">Case ${row.case_number}</p></div>`});}catch(_){/* in-account attention notification remains */}
+}
+
 export default async function(req,res){
   const cursorTime=String(req.body?.cursor_time||'1970-01-01T00:00:00.000Z');
   const cursorId=String(req.body?.cursor_id||'00000000-0000-0000-0000-000000000000');
@@ -40,6 +50,7 @@ export default async function(req,res){
   let queued=0;
   for(const row of active.rows){
     await sendCaseUpdate(row);
+    if(row.status==='WAITING_FOR_USER') await sendAttentionEmail(row);
     if(row.identity_status!=='VERIFIED_ACCOUNT') continue;
     if(row.status==='WAITING_FOR_USER' && !String(row.transaction_reference||'').trim()) continue;
     if(row.status==='REPORTED' || !row.ai_last_run_at || Date.now()-new Date(row.ai_last_run_at).getTime()>55*60*1000){
