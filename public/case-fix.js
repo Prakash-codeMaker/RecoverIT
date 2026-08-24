@@ -340,6 +340,6 @@
   pollTimer = setInterval(() => {
     const contextOpen = document.getElementById('contextModal')?.classList.contains('open');
     if (!document.hidden && !busy && !contextOpen) load();
-  }, 5000);
+  }, 2500);
   window.addEventListener('beforeunload', () => clearInterval(pollTimer));
 })();

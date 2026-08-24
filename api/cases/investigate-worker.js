@@ -57,12 +57,22 @@ async function aiInvestigate(c,step,evidence,provider,previous){
 
 CASE DATA:\n${JSON.stringify(facts)}\n\nReturn ONLY compact valid JSON, no markdown:\n{"summary":"<=200 chars","findings":[{"text":"<=160 chars","status":"verified|reported|conflict|unknown"}],"next_steps":["<=160 chars"],"confidence":0,"needs_user":false,"user_request":"<=200 chars"}`;
   try{
-    const out=await ai.generateText({model:'gemini-flash',prompt,purpose:'payment-investigation',userId:c.user_id,maxTokens:700});
-    const parsed=extractJson(out.text);
+    const out=await ai.generateText({model:'gemini-flash',prompt,purpose:'payment-investigation',userId:c.user_id,maxTokens:1000});
+    let parsed=extractJson(out.text);
+    if(!parsed){
+      const retryPrompt=`Analyze this RecoverIT case quickly and return ONLY valid JSON. Never invent facts. If information is missing, ask only for the smallest useful detail.\nCase: ${JSON.stringify({issue_type:c.issue_type,description:cleanText(c.description,1800),amount:c.amount,currency:c.currency,merchant:c.merchant_name||null,transaction_reference:c.transaction_reference||null,payment_method:c.payment_method||null,evidence_count:evidence.length,provider_events:provider.length})}\nJSON: {"summary":"short","findings":[{"text":"short","status":"verified|reported|conflict|unknown"}],"next_steps":["short"],"confidence":0,"needs_user":false,"user_request":"short"}`;
+      const retry=await ai.generateText({model:'gemini-flash',prompt:retryPrompt,purpose:'payment-investigation-retry',userId:c.user_id,maxTokens:600});
+      parsed=extractJson(retry.text);
+    }
     if(!parsed)throw new Error('AI returned invalid investigation JSON.');
     return parsed;
   }catch(error){
-    return {available:false,summary:'AI reasoning is temporarily unavailable. RecoverIT has not treated the missing result as evidence.',findings:[],unknowns:[],next_steps:['RecoverIT will retry the investigation automatically. If available, provide the transaction/reference number or provider response.'],confidence:0};
+    const hasReference=Boolean(String(c.transaction_reference||'').trim());
+    const hasEvidence=evidence.length>0;
+    if(!hasReference&&!hasEvidence){
+      return {summary:'The case is missing the payment signal needed for verification.',findings:[{text:'The user-reported issue has not been independently verified.',status:'reported'}],next_steps:['Provide the UTR/RRN/transaction reference or upload proof.', 'Add the provider or merchant response if available.'],confidence:0,needs_user:true,user_request:'Please provide the UTR/RRN/transaction reference or upload proof of the reported request.'};
+    }
+    return {available:false,summary:'RecoverIT could not complete the AI reasoning pass, but no unsupported payment state has been assumed. The case remains open and will retry automatically.',findings:[{text:'The available case information has not been converted into a final payment conclusion.',status:'unknown'}],unknowns:['AI reasoning result unavailable on this pass.'],next_steps:['RecoverIT will retry automatically. No action is required unless new evidence is available.'],confidence:0};
   }
 }
 
@@ -145,7 +155,8 @@ export default async function(req,res){
   const findings=Array.isArray(result.findings)?result.findings.slice(0,10):Array.isArray(result.facts)?result.facts.slice(0,10):[];
   const unknowns=Array.isArray(result.unknowns)?result.unknowns.slice(0,8):[];
   const nextSteps=Array.isArray(result.next_steps)?result.next_steps.slice(0,6):[];
-  const confidence=Math.max(0,Math.min(100,Number(result.confidence)||0));
+  const rawConfidence=Number(result.confidence);
+  const confidence=Number.isFinite(rawConfidence)?Math.max(0,Math.min(100,rawConfidence)):(String(result.confidence||'').toLowerCase()==='high'?85:String(result.confidence||'').toLowerCase()==='medium'?65:String(result.confidence||'').toLowerCase()==='low'?35:0);
 
   if(key==='payment'){
     const facts=Array.isArray(result.facts)?result.facts:[];
