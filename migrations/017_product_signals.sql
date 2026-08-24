@@ -1,0 +1,1 @@
+CREATE TABLE product_signals (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id text, case_id uuid REFERENCES recovery_cases(id) ON DELETE SET NULL, event_name text NOT NULL, path text, metadata jsonb NOT NULL DEFAULT '{}'::jsonb, created_at timestamptz NOT NULL DEFAULT now())

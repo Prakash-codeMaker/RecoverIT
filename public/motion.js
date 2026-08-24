@@ -7,6 +7,12 @@
   };
   pageEnter();
 
+  // Lightweight product learning: capture navigation and meaningful interaction signals, never payment secrets.
+  const activeCaseId=new URLSearchParams(location.search).get('case_id')||new URLSearchParams(location.search).get('id')||null;
+  const signal=(event_name,metadata={},case_id=activeCaseId)=>{try{fetch('/api/product/signals',{method:'POST',credentials:'include',headers:{'content-type':'application/json'},keepalive:true,body:JSON.stringify({event_name,metadata,case_id,path:location.pathname})}).catch(()=>{})}catch(_){}};
+  signal('page_view',{referrer:document.referrer?new URL(document.referrer).pathname:null});
+  document.addEventListener('click',e=>{const el=e.target.closest('a,button');if(!el)return;const label=(el.innerText||el.getAttribute('aria-label')||'').trim().slice(0,100);if(!label)return;signal('case_action',{label,target:el.getAttribute('href')||el.id||null})},{passive:true});
+
   const decorate=()=>{
     const selectors='.card,.stat,.story-card,.journey-item,.ledger,.case-row,.recovery-map,.invest-visual,.next-card,.loginbox,.card2,.orb,.panel,.success,.test-banner,.modalbox,.case-visual,.case-proof-card';
     document.querySelectorAll(selectors).forEach((el,i)=>{

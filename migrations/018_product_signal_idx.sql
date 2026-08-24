@@ -1,0 +1,1 @@
+CREATE INDEX product_signals_event_created_idx ON product_signals(event_name,created_at DESC)
