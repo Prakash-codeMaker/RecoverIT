@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS case_contact_tools (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), case_id uuid NOT NULL REFERENCES recovery_cases(id) ON DELETE CASCADE, provider text, channel text NOT NULL, payload jsonb NOT NULL DEFAULT '{}'::jsonb, created_at timestamptz NOT NULL DEFAULT now());
