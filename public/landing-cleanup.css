@@ -1,0 +1,2 @@
+/* Premium landing-page cleanup: hide redundant case animation section without touching app logic. */
+#cases { display: none !important; }
