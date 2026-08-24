@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>RecoverIT — Payment recovery, handled.</title>
-<link rel="stylesheet" href="/theme.css"><link rel="stylesheet" href="/india-motion.css"><link rel="stylesheet" href="/case-visual.css">
+<link rel="stylesheet" href="/theme.css"><link rel="stylesheet" href="/india-motion.css"><link rel="stylesheet" href="/case-visual.css"><style>
+.signup-note{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:18px;color:#7f8995;font-size:12px}.signup-note span:first-child{color:#b8ff62;font-weight:900}.signup-note b{color:#dce3de}.conversion-section{padding-top:90px}.conversion-head{display:flex;justify-content:space-between;gap:40px;align-items:end;margin-bottom:28px}.conversion-head h2{font-size:clamp(40px,5vw,68px);line-height:.98;letter-spacing:-.05em;margin:0 0 16px;max-width:760px}.problem-picker{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #252c33;border-radius:24px;overflow:hidden;background:#0d1115}.problem-choice{appearance:none;border:0;border-right:1px solid #252c33;background:transparent;color:#f5f7f9;text-align:left;padding:24px;min-height:170px;cursor:pointer;transition:.3s ease}.problem-choice:last-child{border-right:0}.problem-choice span{display:block;color:#b8ff62;font:11px monospace;letter-spacing:.12em;margin-bottom:35px}.problem-choice b{display:block;font-size:17px;margin-bottom:8px}.problem-choice small{display:block;color:#7f8995;line-height:1.5}.problem-choice:hover,.problem-choice.active{background:#141a18}.problem-choice.active{box-shadow:inset 0 -2px #b8ff62}.conversion-demo{margin-top:18px;border:1px solid #252c33;border-radius:28px;min-height:300px;padding:28px;display:grid;grid-template-columns:1.05fr 1fr;gap:45px;align-items:center;background:linear-gradient(120deg,#0c1012,#101613);overflow:hidden}.demo-visual{height:245px;border-radius:20px;position:relative;overflow:hidden;background:#070909}.demo-visual img{width:100%;height:100%;object-fit:cover;opacity:.65;filter:saturate(.75)}.demo-pulse{position:absolute;width:14px;height:14px;border-radius:50%;background:#b8ff62;left:35%;top:52%;box-shadow:0 0 0 0 #b8ff6240;animation:demoPulse 2.2s infinite}.conversion-demo h3{font-size:clamp(28px,3vw,44px);line-height:1.02;letter-spacing:-.035em;margin:0 0 14px}.demo-flow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:25px;font-size:12px;color:#87929d}.demo-flow i{width:24px;height:1px;background:#39423d}.demo-flow strong{color:#b8ff62}@keyframes demoPulse{50%{box-shadow:0 0 0 18px #b8ff6200,0 0 28px #b8ff6240}100%{box-shadow:0 0 0 0 #b8ff6200}}@media(max-width:900px){.problem-picker{grid-template-columns:1fr 1fr}.problem-choice:nth-child(2){border-right:0}.problem-choice:nth-child(-n+2){border-bottom:1px solid #252c33}.conversion-demo{grid-template-columns:1fr}.conversion-head{align-items:start;flex-direction:column}}@media(max-width:560px){.problem-picker{grid-template-columns:1fr}.problem-choice{border-right:0;border-bottom:1px solid #252c33}.problem-choice:last-child{border-bottom:0}.conversion-demo{padding:18px}.demo-visual{height:190px}}
+</style>
 </head>
 <body>
 <div class="shell">
@@ -18,8 +20,8 @@
     <div class="eyebrow">PAYMENT RECOVERY · INDIA-NATIVE</div>
     <h1>When money<br>goes <em>missing.</em><br>We follow it.</h1>
     <p class="hero-lede">RecoverIT investigates payment and refund problems, reconstructs what happened, finds the safest next step, and keeps the case moving until it is resolved.</p>
-    <div class="actions hero-meta"><a class="btn primary" href="/report.html">Resolve a payment issue →</a><a class="btn ghost" href="#how">See the journey</a></div>
-    <div class="hero-meta"><span class="micro"><b>UPI</b> · cards · bank rails · merchant systems</span><span class="micro">AI investigation + deterministic money protection</span></div>
+    <div class="actions hero-meta"><a class="btn primary" href="/report.html">Check my payment issue →</a><a class="btn ghost" href="#try">See a real example</a></div>
+    <div class="hero-meta"><span class="micro"><b>UPI</b> · cards · bank rails · merchant systems</span><span class="micro">AI investigation + deterministic money protection</span></div><div class="signup-note"><span>✓</span><b>Free to start</b><span>·</span><span>Passwordless email sign-in</span><span>·</span><span>Keep your case monitored</span></div>
   </div>
   <div class="hero-visual reveal delay1">
     <div class="photo-stage"><img src="/india/mumbai-rickshaws.jpg" alt="Rickshaws moving through Mumbai" data-parallax=".035"><div class="wash"></div></div>
@@ -40,6 +42,17 @@
     <div class="collage-card reveal"><img src="/india/delhi-metro.jpg" alt="People boarding a Delhi Metro train" loading="lazy" data-parallax=".02"><div class="collage-label">DELHI · MOVEMENT / MANY ACTORS</div></div>
     <div class="collage-card small reveal delay2"><img src="/india/indian-market.jpg" alt="Indian street market" loading="lazy"><div class="collage-label">INDIA · EVERYDAY COMMERCE</div></div>
   </div>
+</section>
+
+<section class="section section-tight conversion-section" id="try">
+  <div class="conversion-head reveal"><div><div class="eyebrow">SEE IT BEFORE YOU SIGN UP</div><h2>Start with the problem you actually have.</h2><p class="muted">No account is needed to understand the flow. Pick a situation, see how RecoverIT investigates it, then start your own case when you're ready.</p></div><a class="btn primary" href="/report.html">Start my case →</a></div>
+  <div class="problem-picker reveal delay1">
+    <button class="problem-choice active" data-case="refund"><span>01</span><b>Refund never arrived</b><small>Refund says processed. Your account says otherwise.</small></button>
+    <button class="problem-choice" data-case="failed"><span>02</span><b>Payment failed, money deducted</b><small>Checkout failed but the amount left your account.</small></button>
+    <button class="problem-choice" data-case="duplicate"><span>03</span><b>I was charged twice</b><small>Two payment signals. One purchase.</small></button>
+    <button class="problem-choice" data-case="other"><span>04</span><b>Something else happened</b><small>Tell RecoverIT the story in your own words.</small></button>
+  </div>
+  <div class="conversion-demo reveal delay2" id="conversionDemo"><div class="demo-visual"><img src="/cases/refund-not-received.svg" alt="Refund investigation example" id="demoImage"><span class="demo-pulse"></span></div><div><div class="eyebrow" id="demoEyebrow">RIGHT NOW</div><h3 id="demoTitle">Refund marked complete. Money still missing.</h3><p class="muted" id="demoText">RecoverIT compares the payment, refund and provider evidence, then tells you exactly what information is still needed.</p><div class="demo-flow"><span>Payment</span><i></i><span>Provider</span><i></i><span>Evidence</span><i></i><strong>Next step</strong></div></div></div>
 </section>
 
 <section class="section section-tight" id="cases"><div class="section-head reveal"><div class="eyebrow">EVERY CASE HAS A DIFFERENT STORY</div><h2>RecoverIT changes the visual journey with the problem.</h2><p class="muted">A missing refund should look like a missing refund. A duplicate should show duplication. A failed-but-debited payment should show the mismatch. The interface never pretends these are the same problem.</p></div><div class="case-visual-list" style="margin-top:30px"><div class="case-visual compact reveal"><img src="/cases/refund-not-received.svg" alt="Payment completed but refund not received"><div class="case-visual-copy"><div><span class="case-state warn">REFUND NOT RECEIVED</span><h2>Paid. Refunded on paper. Still waiting in reality.</h2></div><div class="case-flow"><div class="case-flow-line"></div><i class="case-flow-dot d1"></i><i class="case-flow-dot d2"></i><i class="case-flow-dot d3"></i><span class="case-flow-label l1">PAYMENT</span><span class="case-flow-label l2">REFUND</span><span class="case-flow-label l3">RECOVERIT</span></div></div></div><div class="case-visual compact reveal"><img src="/cases/duplicate-payment.svg" alt="Duplicate payment protection"><div class="case-visual-copy"><div><span class="case-state">DUPLICATE PAYMENT</span><h2>Same payment signal? RecoverIT blocks the second action.</h2></div><div class="case-flow"><div class="case-flow-line"></div><i class="case-flow-dot d1"></i><i class="case-flow-dot d2"></i><i class="case-flow-dot d3"></i><span class="case-flow-label l1">PAYMENT</span><span class="case-flow-label l2">MATCH</span><span class="case-flow-label l3">BLOCKED</span></div></div></div><div class="case-visual compact reveal"><img src="/cases/payment-failed-deducted.svg" alt="Payment failed but account was debited"><div class="case-visual-copy"><div><span class="case-state warn">FAILED + DEBITED</span><h2>Failed at checkout. Debited at the bank. Reconstruct the gap.</h2></div><div class="case-flow"><div class="case-flow-line"></div><i class="case-flow-dot d1"></i><i class="case-flow-dot d2"></i><i class="case-flow-dot d3"></i><span class="case-flow-label l1">DEBIT</span><span class="case-flow-label l2">GATEWAY</span><span class="case-flow-label l3">VERIFY</span></div></div></div></div></section>
@@ -87,6 +100,16 @@
 
 <!-- public footer removed -->
 </div>
-<script src="/motion.js"></script>
+<script>
+(function(){
+const data={
+ refund:{img:'/cases/refund-not-received.svg',title:'Refund marked complete. Money still missing.',text:'RecoverIT compares the payment, refund and provider evidence, then tells you exactly what information is still needed.',flow:['Payment','Provider','Evidence','Next step']},
+ failed:{img:'/cases/payment-failed-deducted.svg',title:'Checkout failed. Your money still left.',text:'RecoverIT reconstructs the hand-off between checkout, gateway and bank so you can see where the mismatch occurred.',flow:['Debit','Gateway','Bank','Next step']},
+ duplicate:{img:'/cases/duplicate-payment.svg',title:'Two payment signals. One purchase.',text:'RecoverIT checks the timeline before a duplicate action can create another problem.',flow:['Payment','Match','Ledger','Protected']},
+ other:{img:'/cases/other-payment.svg',title:'Something else went wrong.',text:'Describe what happened naturally. RecoverIT builds the case first and asks for only the evidence that matters.',flow:['Story','Proof','Timeline','Next step']}
+};
+document.querySelectorAll('.problem-choice').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.problem-choice').forEach(x=>x.classList.remove('active'));btn.classList.add('active');const d=data[btn.dataset.case];document.getElementById('demoImage').src=d.img;document.getElementById('demoTitle').textContent=d.title;document.getElementById('demoText').textContent=d.text;document.querySelector('.demo-flow').innerHTML=d.flow.map((x,i)=>(i?'<i></i>':'')+(i===d.flow.length-1?'<strong>'+x+'</strong>':'<span>'+x+'</span>')).join('')}));
+})();
+</script><script src="/motion.js"></script>
 <script>(async function(){try{const s=await window.hatchable.auth.getSession();const c=document.getElementById('authCta');if(s&&s.user){c.textContent='Dashboard →';c.href='/app.html';}}catch(e){}})();</script>
 </body></html>
