@@ -15,6 +15,31 @@ description = "Google Gemini API credential used by RecoverIT's AI investigation
 [project]
 name = "RecoverIT"
 
+# Public repository: secrets stay in Hatchable Setup and are never committed.
+[db.tables.case_outcome_signals]
+read = "own"
+write = "own"
+
+[db.tables.escalation_preparations]
+read = "own"
+write = "own"
+
+[db.tables.payment_monitors]
+read = "own"
+write = "own"
+
+[db.tables.payment_protection_items]
+read = "own"
+write = "own"
+
+[db.tables.product_signals]
+read = "own"
+write = "own"
+
+[db.tables.case_resolution_state]
+read = "own"
+write = "own"
+
 [[cron]]
 path = "/api/jobs/case-monitor"
 schedule = "0 * * * *"
