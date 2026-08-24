@@ -3,6 +3,7 @@ import { getCase, addEvent } from 'lib/case.js';
 
 export const access='scheduler';
 export const methods=['POST'];
+export const schedule='0 * * * *';
 
 const STEPS=[
   ['payment','Understand your story'],
@@ -25,6 +26,13 @@ async function setStep(id,key,status,detail){
 }
 async function scheduleNext(caseId,userId){
   await scheduler.at(new Date(Date.now()+1200).toISOString(),'/api/cases/investigate-worker',{payload:{case_id:caseId,user_id:userId}});
+}
+async function scheduleMonitor(caseId,userId){
+  await scheduler.at('0 * * * *','/api/cases/investigate-worker',{payload:{case_id:caseId,user_id:userId},name:`recoverit-monitor-${caseId}`});
+}
+async function notify(userId,caseId,title,description){
+  const recent=await db.query('SELECT id FROM notifications WHERE user_id=$1 AND case_id=$2 AND title=$3 AND created_at>now()-interval \'30 minutes\' LIMIT 1',[userId,caseId,title]);
+  if(!recent.rows[0]) await db.query('INSERT INTO notifications (user_id,case_id,type,title,description) VALUES ($1,$2,$3,$4,$5)',[userId,caseId,'case_update',title,description]);
 }
 async function aiInvestigate(c,step,evidence,provider,previous){
   const facts={
@@ -59,12 +67,41 @@ CASE DATA:\n${JSON.stringify(facts)}\n\nReturn ONLY valid JSON matching this sha
 }
 
 export default async function(req,res){
+  if(!req.body?.case_id){
+    const active=await db.query("SELECT id,user_id FROM recovery_cases WHERE status='INVESTIGATING' AND transaction_reference IS NOT NULL ORDER BY updated_at ASC LIMIT 25");
+    for(const row of active.rows) await scheduler.now('/api/cases/investigate-worker',{case_id:row.id,user_id:row.user_id});
+    return res.json({ok:true,monitored_cases:active.rows.length});
+  }
   const c=await getCase(req.body?.case_id,req.body?.user_id);
   if(!c)return res.status(404).json({error:'Case not found.'});
 
+  const identity=await db.query('SELECT email_verified_at FROM users WHERE id=$1',[c.user_id]);
+  if(!identity.rows[0]?.email_verified_at){
+    await db.query('UPDATE recovery_cases SET status=$1,identity_status=$2,updated_at=now() WHERE id=$3',['WAITING_FOR_USER','EMAIL_VERIFICATION_REQUIRED',c.id]);
+    await addEvent(c.id,'Identity verification required','RecoverIT paused the investigation until the signed-in account email is verified.','WAITING_FOR_USER','RecoverIT');
+    await notify(c.user_id,c.id,'Verify your account details','Verify the email used for this RecoverIT account. Once verified, the investigation will continue automatically.');
+    return res.json({ok:true,status:'WAITING_FOR_USER',reason:'EMAIL_VERIFICATION_REQUIRED'});
+  }
+  if(c.identity_status!=='VERIFIED_ACCOUNT'){
+    await db.query('UPDATE recovery_cases SET identity_status=$1,identity_verified_at=now(),updated_at=now() WHERE id=$2',['VERIFIED_ACCOUNT',c.id]);
+    await addEvent(c.id,'Identity verified','RecoverIT verified the signed-in account email before continuing the investigation.','INVESTIGATING','RecoverIT');
+    await notify(c.user_id,c.id,'Identity verified','Your signed-in account is verified. RecoverIT is continuing the investigation.');
+  }
+
   const steps=await db.query('SELECT step_key,status,detail FROM investigation_steps WHERE case_id=$1 ORDER BY created_at ASC',[c.id]);
-  const current=STEPS.find(s=>{const row=steps.rows.find(x=>x.step_key===s[0]);return row&&row.status!=='DONE';});
-  if(!current){await db.query('UPDATE recovery_cases SET status=$1,updated_at=now() WHERE id=$2',['WAITING_FOR_USER',c.id]);return res.json({ok:true,status:'WAITING_FOR_USER',complete:true});}
+  let current=STEPS.find(s=>{const row=steps.rows.find(x=>x.step_key===s[0]);return row&&row.status!=='DONE';});
+  if(!current){
+    const reference=String(c.transaction_reference||'').trim();
+    if(!reference){
+      await db.query('UPDATE recovery_cases SET status=$1,updated_at=now() WHERE id=$2',['WAITING_FOR_USER',c.id]);
+      await addEvent(c.id,'More detail required','RecoverIT needs the transaction/reference number or a provider response before it can verify the payment-side trail.','WAITING_FOR_USER','RecoverIT');
+      await notify(c.user_id,c.id,'One detail is needed','Add the transaction/reference number or paste the provider response. RecoverIT will continue automatically after you add it.');
+      return res.json({ok:true,status:'WAITING_FOR_USER',reason:'REFERENCE_REQUIRED'});
+    }
+    await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['RUNNING','New provider information may have arrived. RecoverIT is checking again.',c.id,'provider']);
+    await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['QUEUED','Waiting for the latest provider reconciliation.',c.id,'safe_path']);
+    current=STEPS.find(s=>s[0]==='provider');
+  }
 
   const [key,title]=current;
   const evidence=(await db.query('SELECT filename,content_type,bytes,sha256 FROM evidence WHERE case_id=$1 ORDER BY created_at ASC',[c.id])).rows;
@@ -102,9 +139,23 @@ export default async function(req,res){
   if(next<STEPS.length){
     await scheduleNext(c.id,c.user_id);
   }else{
-    const waiting=provider.length===0;
-    await db.query('UPDATE recovery_cases SET status=$1,updated_at=now() WHERE id=$2',[waiting?'WAITING_FOR_USER':'INVESTIGATING',c.id]);
-    await addEvent(c.id,waiting?'AI needs more evidence':'AI investigation pass complete',waiting?'AI could not verify a provider-side event for this case. Add the transaction/reference number or provider response so reconciliation can continue.':'AI completed an evidence-aware investigation pass. The case remains open for new provider events or proof.','INVESTIGATING','RecoverIT AI',confidence);
+    const reference=String(c.transaction_reference||'').trim();
+    const waitingForReference=!reference;
+    if(waitingForReference){
+      await db.query('UPDATE recovery_cases SET status=$1,updated_at=now() WHERE id=$2',['WAITING_FOR_USER',c.id]);
+      await addEvent(c.id,'More detail required','RecoverIT completed every available investigation step but still needs the transaction/reference number or provider response to verify the payment trail.','WAITING_FOR_USER','RecoverIT AI',confidence);
+      await notify(c.user_id,c.id,'One detail is needed','RecoverIT has finished the available checks. Add the transaction/reference number or provider response so it can continue verifying the case.');
+    }else if(provider.length===0){
+      await db.query('UPDATE recovery_cases SET status=$1,updated_at=now() WHERE id=$2',['INVESTIGATING',c.id]);
+      await addEvent(c.id,'Provider monitoring continues','No matching provider event is visible yet. RecoverIT will keep checking the provider trail automatically and update you when something changes.','INVESTIGATING','RecoverIT AI',confidence);
+      await notify(c.user_id,c.id,'Investigation continues','RecoverIT could not verify a provider-side event yet. It will keep checking automatically; no action is needed right now.');
+      await scheduleMonitor(c.id,c.user_id);
+    }else{
+      await db.query('UPDATE recovery_cases SET status=$1,updated_at=now() WHERE id=$2',['INVESTIGATING',c.id]);
+      await addEvent(c.id,'Investigation remains active','RecoverIT found provider-side evidence and will continue reconciling new events until the case reaches a defensible resolution.','INVESTIGATING','RecoverIT AI',confidence);
+      await notify(c.user_id,c.id,'New investigation pass complete','RecoverIT has new provider evidence and is continuing reconciliation. You will be asked for information only if the case requires it.');
+      await scheduleMonitor(c.id,c.user_id);
+    }
   }
   res.json({ok:true,status:'INVESTIGATING',step:key,confidence});
 }

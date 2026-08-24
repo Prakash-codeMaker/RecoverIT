@@ -55,6 +55,9 @@
     const evidence = Array.isArray(data.evidence) ? data.evidence : [];
     const progress = data.progress || {};
     const waiting = c.status === 'WAITING_FOR_USER';
+    const identityVerified = c.identity_status === 'VERIFIED_ACCOUNT';
+    const needsIdentity = !identityVerified;
+    const needsUserInput = waiting && !needsIdentity;
     const running = steps.some((s) => s.status === 'RUNNING');
     const current = steps.find((s) => s.status === 'RUNNING') || steps.find((s) => s.status === 'WAITING') || steps.find((s) => s.status === 'QUEUED');
     const percent = Math.max(0, Math.min(100, Number(progress.percent || 0)));
@@ -66,6 +69,9 @@
     const ai = data.ai || {};
     const aiFindings = Array.isArray(ai.findings) ? ai.findings : [];
     const aiNext = Array.isArray(ai.next_steps) ? ai.next_steps : [];
+    const identityCard = identityVerified ? `
+      <section class="identity-card verified"><div><div class="eyebrow">ACCOUNT VERIFIED</div><strong>RecoverIT verified your signed-in account.</strong><p>Your investigation can continue using this account identity.</p></div><span>✓</span></section>` : `
+      <section class="identity-card"><div><div class="eyebrow">IDENTITY CHECK</div><strong>Verify your RecoverIT account details.</strong><p>We verify the signed-in account before treating case information as identity-linked evidence.</p></div><button class="btn primary" id="verifyIdentity" type="button">Verify details →</button><div class="identity-status" id="identityStatus"></div></section>`;
     const aiReport = ai.ready ? `
       <section class="ai-report reveal in">
         <div class="ai-report-head">
@@ -97,7 +103,7 @@
           <h1>${esc(pretty(c.issue_type) || 'Investigation')}</h1>
           <p class="muted">${esc(c.description || 'RecoverIT is investigating your report.')}</p>
         </div>
-        <div class="livebadge"><span class="pulse"></span>${waiting ? 'Your turn' : 'Investigating'}</div>
+        <div class="livebadge"><span class="pulse"></span>${needsUserInput ? 'Your turn' : (needsIdentity ? 'Verify account' : 'Investigating')}</div>
       </div>
 
       <div class="recovery-map">
@@ -116,11 +122,12 @@
         <div class="radar"><div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div><div class="radar-core"></div><div class="sweep"></div></div>
         <div>
           <div class="eyebrow">RIGHT NOW</div>
-          <h2>${esc(current?.title || (waiting ? 'Waiting for you' : 'Following your case'))}</h2>
+          <h2>${esc(current?.title || (needsUserInput ? 'Waiting for you' : (needsIdentity ? 'Verifying your account' : 'Following your case')))}</h2>
           <p>${esc(guidance)}</p>
         </div>
       </div>
 
+      ${identityCard}
       ${aiReport}
 
       <div class="mini-journey">
@@ -129,13 +136,30 @@
       </div>
 
       <div class="next-card">
-        <div><div class="eyebrow">YOUR NEXT STEP</div><h3>${esc(waiting ? (data.guidance || 'We need one more thing from you.') : (data.guidance || 'Nothing needed right now.'))}</h3></div>
-        ${waiting ? '<button class="next-action" id="nextStepButton" type="button">Add details <span>→</span></button>' : '<div class="next-arrow">→</div>'}
+        <div><div class="eyebrow">YOUR NEXT STEP</div><h3>${esc(needsUserInput ? (data.guidance || 'We need one more thing from you.') : (needsIdentity ? (data.guidance || 'Verify your signed-in account details.') : (data.guidance || 'RecoverIT is continuing the investigation automatically.')))}</h3></div>
+        ${needsUserInput ? '<button class="next-action" id="nextStepButton" type="button">Add details <span>→</span></button>' : '<div class="next-arrow">→</div>'}
       </div>
-      ${waiting ? `<div class="context-modal" id="contextModal" aria-hidden="true"><div class="context-backdrop" data-close-context></div><section class="context-dialog" role="dialog" aria-modal="true" aria-labelledby="contextTitle"><button class="context-close" id="contextClose" type="button" aria-label="Close">×</button><div class="eyebrow">CONTINUE THE INVESTIGATION</div><h2 id="contextTitle">Give RecoverIT one more signal.</h2><p class="muted">Choose how you want to tell RecoverIT what happened. You can type, paste the provider response, or simply speak naturally.</p><div class="context-voice" id="contextVoice"><button class="context-voice-button" id="contextVoiceButton" type="button" aria-label="Speak provider response">●</button><div><strong id="contextVoiceTitle">Speak your provider response</strong><p id="contextVoiceState">Tell RecoverIT what the merchant, bank, wallet or payment provider told you. Your speech will appear in the response box.</p></div></div><label>Transaction / reference number<input id="contextReference" autocomplete="off" placeholder="e.g. UTR, RRN, transaction ID"></label><label>Provider / merchant response<textarea id="contextResponse" rows="6" placeholder="Paste or type the message, email, call summary, or response you received…"></textarea></label><label class="context-upload">Add new proof<input id="contextFile" type="file" accept="image/jpeg,image/png,image/webp,application/pdf,video/mp4"><span>Receipt, bank statement, refund message, screenshot or video</span></label><div class="context-actions"><button class="btn" id="contextCancel" type="button">Not now</button><button class="btn primary" id="contextSubmit" type="button">Send to RecoverIT AI →</button></div><div class="context-status" id="contextStatus"></div></section></div>` : ''}
+      ${needsUserInput ? `<div class="context-modal" id="contextModal" aria-hidden="true"><div class="context-backdrop" data-close-context></div><section class="context-dialog" role="dialog" aria-modal="true" aria-labelledby="contextTitle"><button class="context-close" id="contextClose" type="button" aria-label="Close">×</button><div class="eyebrow">CONTINUE THE INVESTIGATION</div><h2 id="contextTitle">Give RecoverIT one more signal.</h2><p class="muted">Choose how you want to tell RecoverIT what happened. You can type, paste the provider response, or simply speak naturally.</p><div class="context-voice" id="contextVoice"><button class="context-voice-button" id="contextVoiceButton" type="button" aria-label="Speak provider response">●</button><div><strong id="contextVoiceTitle">Speak your provider response</strong><p id="contextVoiceState">Tell RecoverIT what the merchant, bank, wallet or payment provider told you. Your speech will appear in the response box.</p></div></div><label>Transaction / reference number<input id="contextReference" autocomplete="off" placeholder="e.g. UTR, RRN, transaction ID"></label><label>Provider / merchant response<textarea id="contextResponse" rows="6" placeholder="Paste or type the message, email, call summary, or response you received…"></textarea></label><label class="context-upload">Add new proof<input id="contextFile" type="file" accept="image/jpeg,image/png,image/webp,application/pdf,video/mp4"><span>Receipt, bank statement, refund message, screenshot or video</span></label><div class="context-actions"><button class="btn" id="contextCancel" type="button">Not now</button><button class="btn primary" id="contextSubmit" type="button">Send to RecoverIT AI →</button></div><div class="context-status" id="contextStatus"></div></section></div>` : ''}
 
       <div class="proof-line"><span>${evidence.length} proof file${evidence.length === 1 ? '' : 's'}</span><span>Evidence is checked as new information arrives</span></div>
     `;
+
+    const verifyButton = document.getElementById('verifyIdentity');
+    verifyButton?.addEventListener('click', async () => {
+      const status = document.getElementById('identityStatus');
+      verifyButton.disabled = true;
+      verifyButton.textContent = 'Verifying…';
+      try {
+        const result = await request('/api/verification/identity', { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({case_id:caseId}) }, 7000);
+        if (!result.response.ok) throw new Error(result.data?.error || 'Could not verify the account.');
+        if (!result.data.verified) throw new Error(result.data?.message || 'Account verification is still required.');
+        await load();
+      } catch (error) {
+        if (status) status.textContent = error.message || 'Verification could not be completed.';
+        verifyButton.disabled = false;
+        verifyButton.textContent = 'Verify details →';
+      }
+    });
 
     const open = document.getElementById('nextStepButton');
     const modal = document.getElementById('contextModal');

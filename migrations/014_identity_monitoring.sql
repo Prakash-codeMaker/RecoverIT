@@ -1,0 +1,1 @@
+ALTER TABLE recovery_cases ADD COLUMN identity_status text NOT NULL DEFAULT 'UNVERIFIED', ADD COLUMN identity_verified_at timestamptz;
