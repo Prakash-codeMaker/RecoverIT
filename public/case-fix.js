@@ -143,7 +143,7 @@
 
       <div class="next-card">
         <div><div class="eyebrow">YOUR NEXT STEP</div><h3>${esc(needsUserInput ? (data.guidance || 'We need one more thing from you.') : (needsIdentity ? (data.guidance || 'Verify your signed-in account details.') : (data.guidance || 'RecoverIT is continuing the investigation automatically.')))}</h3></div>
-        ${needsUserInput ? '<button class="next-action" id="nextStepButton" type="button">Add details <span>→</span></button>' : '<div class="next-arrow">→</div>'}
+        ${needsUserInput ? '<button class="next-action" id="nextStepButton" type="button">Add details <span>→</span></button>' : needsIdentity ? '<button class="next-action" id="verifyNextStep" type="button">Verify details <span>→</span></button>' : '<span class="next-status">RecoverIT is working <span class="pulse"></span></span>'}
       </div>
       ${needsUserInput ? `<div class="context-modal" id="contextModal" aria-hidden="true"><div class="context-backdrop" data-close-context></div><section class="context-dialog" role="dialog" aria-modal="true" aria-labelledby="contextTitle"><button class="context-close" id="contextClose" type="button" aria-label="Close">×</button><div class="eyebrow">CONTINUE THE INVESTIGATION</div><h2 id="contextTitle">Give RecoverIT one more signal.</h2><p class="muted">Choose how you want to tell RecoverIT what happened. You can type, paste the provider response, or simply speak naturally.</p><div class="context-voice" id="contextVoice"><button class="context-voice-button" id="contextVoiceButton" type="button" aria-label="Speak provider response">●</button><div><strong id="contextVoiceTitle">Speak your provider response</strong><p id="contextVoiceState">Tell RecoverIT what the merchant, bank, wallet or payment provider told you. Your speech will appear in the response box.</p></div></div><label>Transaction / reference number<input id="contextReference" autocomplete="off" placeholder="e.g. UTR, RRN, transaction ID"></label><label>Provider / merchant response<textarea id="contextResponse" rows="6" placeholder="Paste or type the message, email, call summary, or response you received…"></textarea></label><label class="context-upload">Add new proof<input id="contextFile" type="file" accept="image/jpeg,image/png,image/webp,application/pdf,video/mp4"><span>Receipt, bank statement, refund message, screenshot or video</span></label><div class="context-actions"><button class="btn" id="contextCancel" type="button">Not now</button><button class="btn primary" id="contextSubmit" type="button">Send to RecoverIT AI →</button></div><div class="context-status" id="contextStatus"></div></section></div>` : ''}
 
@@ -151,6 +151,8 @@
     `;
 
     const verifyButton = document.getElementById('verifyIdentity');
+    const verifyNextStep = document.getElementById('verifyNextStep');
+    if (verifyNextStep && verifyButton) verifyNextStep.addEventListener('click', () => verifyButton.click());
     verifyButton?.addEventListener('click', async () => {
       const status = document.getElementById('identityStatus');
       verifyButton.disabled = true;
