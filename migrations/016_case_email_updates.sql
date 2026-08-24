@@ -1,0 +1,1 @@
+ALTER TABLE recovery_cases ADD COLUMN last_email_update_at timestamptz;
