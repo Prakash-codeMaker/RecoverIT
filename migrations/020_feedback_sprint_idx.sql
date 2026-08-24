@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX feedback_sprint_token_uq ON feedback_sprint_responses(sprint_key, session_token); CREATE INDEX feedback_sprint_created_idx ON feedback_sprint_responses(sprint_key, created_at DESC);
