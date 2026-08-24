@@ -5,6 +5,12 @@ providers = ["email", "google"]
 [ai]
 required = true
 
+[[secret]]
+key = "GOOGLE_API_KEY"
+required = true
+expose = false
+description = "Google Gemini API credential used by RecoverIT's AI investigation engine."
+
 [project]
 name = "RecoverIT"
 
