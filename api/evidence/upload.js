@@ -7,6 +7,6 @@ export default async function(req,res){ const f=(req.files||[]).find(x=>x.field=
  await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['RUNNING','New proof received. Comparing it with the existing case timeline.',caseId,'timeline']);
  await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['QUEUED','Waiting for the provider check.',caseId,'provider']);
  await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['QUEUED','Waiting for the updated recovery plan.',caseId,'safe_path']);
- await db.query('INSERT INTO case_events (case_id,title,detail,state,source) VALUES ($1,$2,$3,$4,$5)',[caseId,'New proof received','RecoverIT received new proof and is checking it against the existing case.','INVESTIGATING','RecoverIT']);
+ await db.query('INSERT INTO case_events (case_id,event_type,title,detail,state,source) VALUES ($1,$2,$3,$4,$5,$6)',[caseId,'EVIDENCE_RECEIVED','New proof received','RecoverIT received new proof and is checking it against the existing case.','INVESTIGATING','RecoverIT']);
  await scheduler.now('/api/cases/investigate-worker',{case_id:caseId,user_id:req.user.id});
  res.status(201).json({url,key,sha256:hex,investigation_started:true}); }

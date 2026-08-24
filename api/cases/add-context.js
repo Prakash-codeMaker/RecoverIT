@@ -17,12 +17,12 @@ export default async function(req, res) {
 
   if (reference) {
     await db.query('UPDATE recovery_cases SET transaction_reference=$1,status=$2,updated_at=now() WHERE id=$3 AND user_id=$4', [reference, 'INVESTIGATING', caseId, userId]);
-    await db.query('INSERT INTO case_events (case_id,title,detail,state,source) VALUES ($1,$2,$3,$4,$5)', [caseId, 'Transaction reference added', 'The customer supplied a transaction/reference number for provider reconciliation.', 'INVESTIGATING', 'User']);
+    await db.query('INSERT INTO case_events (case_id,event_type,title,detail,state,source) VALUES ($1,$2,$3,$4,$5,$6)', [caseId, 'CONTEXT_ADDED', 'Transaction reference added', 'The customer supplied a transaction/reference number for provider reconciliation.', 'INVESTIGATING', 'User']);
   }
 
   if (providerResponse) {
     await db.query('UPDATE recovery_cases SET status=$1,updated_at=now() WHERE id=$2 AND user_id=$3', ['INVESTIGATING', caseId, userId]);
-    await db.query('INSERT INTO case_events (case_id,title,detail,state,source) VALUES ($1,$2,$3,$4,$5)', [caseId, 'Provider response added', providerResponse, 'INVESTIGATING', 'User']);
+    await db.query('INSERT INTO case_events (case_id,event_type,title,detail,state,source) VALUES ($1,$2,$3,$4,$5,$6)', [caseId, 'PROVIDER_RESPONSE_ADDED', 'Provider response added', providerResponse, 'INVESTIGATING', 'User']);
   }
 
   await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4', ['RUNNING', 'New case information received. RecoverIT AI is reconciling it now.', caseId, 'provider']);
