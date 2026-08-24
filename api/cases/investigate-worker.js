@@ -59,7 +59,7 @@ CASE DATA:\n${JSON.stringify(facts)}\n\nReturn ONLY valid JSON matching this sha
     if(!parsed)throw new Error('AI returned invalid investigation JSON.');
     return parsed;
   }catch(error){
-    return {summary:'AI investigation is temporarily unavailable; no unsupported payment state was assumed.',findings:[{text:'The case remains open because the reasoning service did not return a reliable result.',status:'unknown'}],unknowns:['AI analysis could not be completed on this pass.'],next_steps:['Keep the case open and provide the transaction/reference number or provider response.'],confidence:0};
+    return {available:false,summary:'AI reasoning is temporarily unavailable. RecoverIT has not treated the missing result as evidence.',findings:[],unknowns:[],next_steps:['RecoverIT will retry the investigation automatically. If available, provide the transaction/reference number or provider response.'],confidence:0};
   }
 }
 
@@ -101,6 +101,12 @@ export default async function(req,res){
   }
 
   const [key,title]=current;
+  if(key==='provider' && !String(c.transaction_reference||'').trim()){
+    await db.query('UPDATE recovery_cases SET status=$1,updated_at=now() WHERE id=$2',['WAITING_FOR_USER',c.id]);
+    await addEvent(c.id,'Transaction reference required','RecoverIT reviewed the available story and proof, but provider reconciliation requires a UTR/RRN/transaction reference or provider response.','WAITING_FOR_USER','RecoverIT');
+    await notify(c.user_id,c.id,'Transaction reference needed','Add the UTR/RRN/transaction reference or paste the provider response. RecoverIT will continue automatically after you provide it.');
+    return res.json({ok:true,status:'WAITING_FOR_USER',reason:'REFERENCE_REQUIRED'});
+  }
   const evidence=(await db.query('SELECT filename,content_type,bytes,sha256 FROM evidence WHERE case_id=$1 ORDER BY created_at ASC',[c.id])).rows;
   const provider=(await db.query('SELECT provider,event_type,canonical_state,payload_json,received_at FROM provider_events WHERE payload_json::text ILIKE $1 ORDER BY received_at DESC LIMIT 20',['%'+String(c.transaction_reference||'')+'%'])).rows;
   const previous=(await db.query('SELECT title,detail,state,source,created_at FROM case_events WHERE case_id=$1 ORDER BY created_at DESC LIMIT 12',[c.id])).rows;
@@ -110,6 +116,13 @@ export default async function(req,res){
   await addEvent(c.id,title,key==='payment'?'RecoverIT AI is extracting and normalizing the payment facts.':key==='timeline'?'RecoverIT AI is reviewing the supplied proof against the case timeline.':key==='provider'?'RecoverIT AI is reconciling provider evidence with the reported state.':'RecoverIT AI is building the final evidence-aware recovery plan.','INVESTIGATING','RecoverIT AI');
 
   const result=await aiInvestigate(c,key,evidence,provider,previous);
+  if(result.available===false){
+    await db.query('UPDATE recovery_cases SET status=$1,ai_status=$2,ai_summary=$3,ai_findings=$4::jsonb,ai_next_steps=$5::jsonb,ai_confidence=NULL,confidence_score=NULL,updated_at=now() WHERE id=$6',['INVESTIGATING','UNAVAILABLE',cleanText(result.summary,5000),'[]','["RecoverIT will retry the investigation automatically. If available, provide the transaction/reference number or provider response."]',c.id]);
+    await setStep(c.id,key,'RUNNING','The reasoning service is temporarily unavailable. RecoverIT will retry automatically; no unsupported payment state has been assumed.');
+    await addEvent(c.id,'AI retry scheduled','The reasoning service did not return a reliable result. RecoverIT is keeping the investigation open and will retry automatically.','INVESTIGATING','RecoverIT');
+    await notify(c.user_id,c.id,'Investigation retry scheduled','RecoverIT could not complete this AI reasoning pass. No payment state was assumed, and the investigation will retry automatically.');
+    return res.json({ok:true,status:'INVESTIGATING',step:key,retry:true});
+  }
   const summary=cleanText(result.summary,5000);
   const findings=Array.isArray(result.findings)?result.findings.slice(0,10):Array.isArray(result.facts)?result.facts.slice(0,10):[];
   const unknowns=Array.isArray(result.unknowns)?result.unknowns.slice(0,8):[];
@@ -128,9 +141,16 @@ export default async function(req,res){
   }
 
   const mergedFindings=[...findings,...unknowns.map(x=>({text:x,status:'unknown'}))];
-  await db.query('UPDATE recovery_cases SET ai_summary=$1,ai_findings=$2::jsonb,ai_next_steps=$3::jsonb,ai_confidence=$4,confidence_score=$5,updated_at=now() WHERE id=$6',[summary,JSON.stringify(mergedFindings),JSON.stringify(nextSteps),confidence,confidence,c.id]);
+  await db.query('UPDATE recovery_cases SET ai_status=$1,ai_summary=$2,ai_findings=$3::jsonb,ai_next_steps=$4::jsonb,ai_confidence=$5,confidence_score=$6,updated_at=now() WHERE id=$7',['AVAILABLE',summary,JSON.stringify(mergedFindings),JSON.stringify(nextSteps),confidence,confidence,c.id]);
   await setStep(c.id,key,'DONE',summary);
   await addEvent(c.id,key==='payment'?'AI facts extracted':key==='timeline'?'AI proof review complete':key==='provider'?'AI provider reconciliation complete':'AI recovery plan complete',summary,'INVESTIGATING','RecoverIT AI',confidence);
+
+  if(key==='payment' && !String(c.transaction_reference||'').trim() && evidence.length===0){
+    await db.query('UPDATE recovery_cases SET status=$1,updated_at=now() WHERE id=$2',['WAITING_FOR_USER',c.id]);
+    await addEvent(c.id,'More information needed','RecoverIT has captured the payment story, but there is no transaction/reference number or proof to verify the payment trail. Add either one and the investigation will continue automatically.','WAITING_FOR_USER','RecoverIT AI',confidence);
+    await notify(c.user_id,c.id,'One detail is needed','Please add the UTR/RRN/transaction reference, provider response, or payment proof. RecoverIT will continue automatically after you add it.');
+    return res.json({ok:true,status:'WAITING_FOR_USER',step:key,reason:'REFERENCE_OR_PROOF_REQUIRED',confidence});
+  }
 
   const next=STEPS.findIndex(s=>s[0]===key)+1;
   if(next<STEPS.length){

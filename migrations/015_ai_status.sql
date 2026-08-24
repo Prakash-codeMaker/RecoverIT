@@ -1,0 +1,1 @@
+ALTER TABLE recovery_cases ADD COLUMN ai_status text NOT NULL DEFAULT 'PENDING';

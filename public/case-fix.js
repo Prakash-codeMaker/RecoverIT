@@ -81,6 +81,12 @@
         <p class="ai-summary">${esc(ai.summary || 'The investigation is still processing.')}</p>
         ${aiFindings.length ? `<div class="ai-findings">${aiFindings.slice(0,8).map(f=>`<div class="ai-finding ${esc(f.status || 'unknown')}"><i></i><span>${esc(f.text || f.value || '')}</span><small>${esc(f.status || 'unknown')}</small></div>`).join('')}</div>` : ''}
         ${aiNext.length ? `<div class="ai-next"><div class="eyebrow">SAFEST NEXT ACTIONS</div>${aiNext.slice(0,5).map((x,i)=>`<div class="ai-action"><b>0${i+1}</b><span>${esc(x)}</span></div>`).join('')}</div>` : ''}
+      </section>` : ai.status === 'UNAVAILABLE' ? `
+      <section class="ai-report ai-retry-card reveal in">
+        <div class="eyebrow">AI INVESTIGATION</div>
+        <h2>Investigation is still running</h2>
+        <p class="ai-summary">RecoverIT could not get a reliable reasoning result on the last pass, so it has not treated that failure as evidence. The investigation remains open and will retry automatically.</p>
+        <div class="ai-retry-state"><span class="pulse"></span><strong>Automatic retry active</strong><span>No unsupported payment state assumed</span></div>
       </section>` : '';
 
     const stepNodes = steps.map((step, index) => {
@@ -226,7 +232,7 @@
         if (!reference && !providerResponse && !file) { status.textContent = 'Add a reference, provider response, or proof first.'; return; }
         button.disabled = true; button.textContent = 'Sending to AI…'; status.textContent = 'RecoverIT is updating the case and restarting reconciliation.';
         try {
-          const context = await request('/api/cases/add-context', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ case_id: caseId, transaction_reference: reference, provider_response: providerResponse }) }, 8000);
+          const context = await request('/api/cases/add-context', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ case_id: caseId, transaction_reference: reference, provider_response: providerResponse, has_proof: Boolean(file) }) }, 8000);
           if (!context.response.ok) throw new Error(context.data?.error || 'Could not update the case.');
           if (file) {
             const fd = new FormData(); fd.append('case_id', caseId); fd.append('file', file);
