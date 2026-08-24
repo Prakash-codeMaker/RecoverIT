@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS payment_monitors (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), case_id uuid NOT NULL, user_id text NOT NULL, monitor_type text NOT NULL, expected_at timestamptz, last_status text, last_checked_at timestamptz, active boolean NOT NULL DEFAULT true, created_at timestamptz NOT NULL DEFAULT now());

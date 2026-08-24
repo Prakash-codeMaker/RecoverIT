@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS payment_protection_items (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id text NOT NULL, case_id uuid, label text NOT NULL, amount numeric, expected_at timestamptz, status text NOT NULL DEFAULT 'WATCHING', source text NOT NULL DEFAULT 'recoverit_case', created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now());

@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS case_outcome_signals (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), case_id uuid NOT NULL, user_id text NOT NULL, outcome text NOT NULL, resolution_time_hours numeric, user_feedback text, created_at timestamptz NOT NULL DEFAULT now());

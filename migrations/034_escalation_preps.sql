@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS escalation_preparations (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), case_id uuid NOT NULL, user_id text NOT NULL, level integer NOT NULL, destination text NOT NULL, reason text NOT NULL, complaint text NOT NULL, ready boolean NOT NULL DEFAULT true, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now());

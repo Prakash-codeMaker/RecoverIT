@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS provider_intelligence (provider_key text PRIMARY KEY, display_name text NOT NULL, channels jsonb NOT NULL DEFAULT '[]'::jsonb, evidence_checklist jsonb NOT NULL DEFAULT '[]'::jsonb, escalation_note text, updated_at timestamptz NOT NULL DEFAULT now());
