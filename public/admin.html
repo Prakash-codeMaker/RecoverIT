@@ -1,1 +1,18 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin · RecoverIT</title><link rel="stylesheet" href="/theme.css"></head><body><div class="shell"><nav class="nav"><a class="brand" href="/">RecoverIT<i></i></a></nav><main class="appmain"><div class="eyebrow">OPERATIONS</div><h1>RecoverIT Admin</h1><p class="muted">Real database analytics only. No fabricated counts.</p><div id="stats" class="grid"></div></main></div><script>fetch('/api/admin/analytics').then(r=>r.json()).then(d=>{if(!d.cases_by_status){document.getElementById('stats').innerHTML='<div class="notice">Admin access required.</div>';return}document.getElementById('stats').innerHTML=d.cases_by_status.map(x=>`<div class="stat"><span>${x.status}</span><strong>${x.count}</strong></div>`).join('')+`<div class="stat"><span>Test / protected actions</span><strong>${d.duplicate_or_test_actions}</strong></div>`})</script><script src="/motion.js"></script></body></html>
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin · RecoverIT</title><link rel="stylesheet" href="/theme.css"></head>
+<body><div class="shell"><nav class="nav"><a class="brand" href="/">RecoverIT<i></i></a></nav><main class="appmain">
+<div class="eyebrow">OPERATIONS</div><h1>RecoverIT Admin</h1><p class="muted">Live product analytics from real database events. Anonymous traffic uses random browser-local IDs; no payment data is collected.</p>
+<section><h2>Traffic · last 24 hours</h2><div id="traffic" class="grid"></div></section>
+<section><h2>Acquisition sources · last 24 hours</h2><div id="sources" class="grid"></div></section>
+<section><h2>Cases</h2><div id="stats" class="grid"></div></section>
+</main></div>
+<script>
+fetch('/api/admin/analytics').then(r=>r.json()).then(d=>{
+ if(!d.cases_by_status){document.getElementById('traffic').innerHTML='<div class="notice">Admin access required.</div>';return}
+ const t=d.traffic||{};
+ const cards=[['Unique visitors',t.unique_visitors_24h||0],['Sessions',t.sessions_24h||0],['Page views',t.page_views_24h||0],['New accounts',d.accounts?.new_24h||0],['Cases created',t.case_creations_24h||0],['Tracked signals',t.signals_24h||0]];
+ document.getElementById('traffic').innerHTML=cards.map(x=>`<div class="stat"><span>${x[0]}</span><strong>${x[1]}</strong></div>`).join('');
+ document.getElementById('sources').innerHTML=(d.acquisition||[]).map(x=>`<div class="stat"><span>${x.source}</span><strong>${x.visitors}</strong></div>`).join('')||'<div class="notice">No attributed traffic yet.</div>';
+ document.getElementById('stats').innerHTML=d.cases_by_status.map(x=>`<div class="stat"><span>${x.status}</span><strong>${x.count}</strong></div>`).join('')+`<div class="stat"><span>Test / protected actions</span><strong>${d.duplicate_or_test_actions||0}</strong></div>`;
+}).catch(()=>{document.getElementById('traffic').innerHTML='<div class="notice">Analytics could not be loaded.</div>'});
+</script><script src="/motion.js"></script></body></html>

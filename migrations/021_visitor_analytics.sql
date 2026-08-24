@@ -1,0 +1,1 @@
+ALTER TABLE product_signals ADD COLUMN visitor_id text;

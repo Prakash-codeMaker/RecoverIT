@@ -1,0 +1,1 @@
+CREATE INDEX product_signals_session_created_idx ON product_signals (session_id, created_at);
