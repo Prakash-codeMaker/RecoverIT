@@ -53,11 +53,11 @@ async function aiInvestigate(c,step,evidence,provider,previous){
     : step==='safe_path'
     ? '{"summary":"string","findings":[{"text":"string","status":"verified|reported|conflict|unknown"}],"next_steps":["string"],"confidence":0}'
     : '{"summary":"string","findings":[{"text":"string","status":"verified|reported|conflict|unknown"}],"unknowns":["string"],"confidence":0}';
-  const prompt=`You are the RecoverIT AI payment investigator. This is a real case review, not a generic chatbot answer. Work ONLY from the supplied case data. ${instructions[step]}
+  const prompt=`You are RecoverIT's payment investigator. Perform ONE fast, evidence-aware pass using ONLY the supplied case data. Separate verified facts from user reports. Never invent a payment, refund, fee, or provider requirement. If something essential is missing, ask for only that information. Keep every string short.
 
-CASE DATA:\n${JSON.stringify(facts)}\n\nReturn ONLY valid JSON matching this shape:\n${schema}`;
+CASE DATA:\n${JSON.stringify(facts)}\n\nReturn ONLY compact valid JSON, no markdown:\n{"summary":"<=200 chars","findings":[{"text":"<=160 chars","status":"verified|reported|conflict|unknown"}],"next_steps":["<=160 chars"],"confidence":0,"needs_user":false,"user_request":"<=200 chars"}`;
   try{
-    const out=await ai.generateText({model:'gemini-flash',prompt,purpose:'payment-investigation',userId:c.user_id,maxTokens:1400});
+    const out=await ai.generateText({model:'gemini-flash',prompt,purpose:'payment-investigation',userId:c.user_id,maxTokens:700});
     const parsed=extractJson(out.text);
     if(!parsed)throw new Error('AI returned invalid investigation JSON.');
     return parsed;
@@ -111,7 +111,16 @@ export default async function(req,res){
     return res.json({ok:true,status:'WAITING_FOR_USER',reason:'REFERENCE_REQUIRED'});
   }
   const evidence=(await db.query('SELECT filename,content_type,bytes,sha256 FROM evidence WHERE case_id=$1 ORDER BY created_at ASC',[c.id])).rows;
-  const provider=(await db.query('SELECT provider,event_type,canonical_state,payload_json,received_at FROM provider_events WHERE payload_json::text ILIKE $1 ORDER BY received_at DESC LIMIT 20',['%'+String(c.transaction_reference||'')+'%'])).rows;
+  const reference=String(c.transaction_reference||'').trim();
+  if(key==='payment' && !reference && evidence.length===0){
+    const message='We captured your story, but we cannot verify the payment request yet. Upload a screenshot, receipt, invoice, provider message, or provide the UTR/RRN/transaction reference. RecoverIT will continue automatically once we have a verifiable signal.';
+    await db.query('UPDATE recovery_cases SET status=$1,ai_status=$2,ai_summary=$3,ai_findings=$4::jsonb,ai_next_steps=$5::jsonb,ai_confidence=NULL,confidence_score=NULL,updated_at=now() WHERE id=$6',['WAITING_FOR_USER','NEEDS_EVIDENCE',message,JSON.stringify([{text:'The reported payment request has not been independently verified.',status:'reported'},{text:'No proof or transaction reference is available yet.',status:'unknown'}]),JSON.stringify(['Upload proof of the payment request.','Provide the UTR/RRN/transaction reference or provider response if available.']),c.id]);
+    await setStep(c.id,key,'DONE',message);
+    await addEvent(c.id,'Evidence needed',message,'WAITING_FOR_USER','RecoverIT');
+    await notify(c.user_id,c.id,'Proof needed to verify your case',message);
+    return res.json({ok:true,status:'WAITING_FOR_USER',step:key,needs_evidence:true});
+  }
+  const provider=(await db.query('SELECT provider,event_type,canonical_state,payload_json,received_at FROM provider_events WHERE payload_json::text ILIKE $1 ORDER BY received_at DESC LIMIT 20',['%'+reference+'%'])).rows;
   const previous=(await db.query('SELECT title,detail,state,source,created_at FROM case_events WHERE case_id=$1 ORDER BY created_at DESC LIMIT 12',[c.id])).rows;
 
   await db.query('UPDATE recovery_cases SET status=$1,updated_at=now(),ai_last_run_at=now() WHERE id=$2',['INVESTIGATING',c.id]);
@@ -123,7 +132,8 @@ export default async function(req,res){
     const missingReference=!String(c.transaction_reference||'').trim();
     const missingProof=evidence.length===0;
     const needsEvidence=missingReference&&missingProof;
-    const message=needsEvidence ? 'We captured your story, but we cannot verify the ₹500 request yet. Upload a screenshot, receipt, invoice, provider message, or provide the UTR/RRN/transaction reference. We will continue automatically once we have a verifiable signal.' : missingReference ? 'We reviewed the available information, but provider reconciliation needs the UTR/RRN/transaction reference or provider response. Add it and RecoverIT will continue automatically.' : 'The AI reasoning service did not return a reliable result. RecoverIT has not assumed any unsupported payment state and will retry automatically.';
+    const providerState=provider[0]?.canonical_state||null;
+    const message=needsEvidence ? 'We captured your story, but we cannot verify the request yet. Upload a screenshot, receipt, invoice, provider message, or provide the UTR/RRN/transaction reference. RecoverIT will continue automatically once we have a verifiable signal.' : missingReference ? 'We reviewed the available information, but provider reconciliation needs the UTR/RRN/transaction reference or provider response. Add it and RecoverIT will continue automatically.' : providerState ? `RecoverIT found a provider-side state (${providerState}) but the AI reasoning service is unavailable. The provider signal has not been turned into a final conclusion yet; monitoring continues automatically.` : 'RecoverIT is checking the available evidence and provider trail. The AI reasoning service is temporarily unavailable, so no unsupported payment state has been assumed.';
     const nextSteps=needsEvidence ? ['Upload proof of the ₹500 request or provide the UTR/RRN/transaction reference.','If the Jio Store gave you a message, invoice, receipt, or written explanation, add that too.'] : [message];
     await db.query('UPDATE recovery_cases SET status=$1,ai_status=$2,ai_summary=$3,ai_findings=$4::jsonb,ai_next_steps=$5::jsonb,ai_confidence=NULL,confidence_score=NULL,updated_at=now() WHERE id=$6',[needsEvidence?'WAITING_FOR_USER':'INVESTIGATING','UNAVAILABLE',message,JSON.stringify([{text:'The reported ₹500 request has not been independently verified.',status:'reported'},{text:'RecoverIT will not label the charge valid or invalid without supporting evidence.',status:'unknown'}]),JSON.stringify(nextSteps),c.id]);
     await setStep(c.id,key,needsEvidence?'DONE':'RUNNING',message);
@@ -151,7 +161,21 @@ export default async function(req,res){
   const mergedFindings=[...findings,...unknowns.map(x=>({text:x,status:'unknown'}))];
   await db.query('UPDATE recovery_cases SET ai_status=$1,ai_summary=$2,ai_findings=$3::jsonb,ai_next_steps=$4::jsonb,ai_confidence=$5,confidence_score=$6,updated_at=now() WHERE id=$7',['AVAILABLE',summary,JSON.stringify(mergedFindings),JSON.stringify(nextSteps),confidence,confidence,c.id]);
   await setStep(c.id,key,'DONE',summary);
-  await addEvent(c.id,key==='payment'?'AI facts extracted':key==='timeline'?'AI proof review complete':key==='provider'?'AI provider reconciliation complete':'AI recovery plan complete',summary,'INVESTIGATING','RecoverIT AI',confidence);
+  await addEvent(c.id,'Investigation pass complete',summary,'INVESTIGATING','RecoverIT AI',confidence);
+
+  // One AI call now completes the full reasoning pass. Do not make the user wait through four serial model calls.
+  if(key==='payment'){
+    for(const [stepKey] of STEPS.slice(1)) await setStep(c.id,stepKey,'DONE',summary);
+  }
+
+  const aiNeedsUser=Boolean(result.needs_user) || (!String(c.transaction_reference||'').trim() && evidence.length===0);
+  if(aiNeedsUser){
+    const request=cleanText(result.user_request||nextSteps[0]||'Please provide the missing transaction/reference number, provider response, or proof needed to verify this case.',1200);
+    await db.query('UPDATE recovery_cases SET status=$1,updated_at=now() WHERE id=$2',['WAITING_FOR_USER',c.id]);
+    await addEvent(c.id,'One detail is needed',request,'WAITING_FOR_USER','RecoverIT AI',confidence);
+    await notify(c.user_id,c.id,'RecoverIT needs one detail',request);
+    return res.json({ok:true,status:'WAITING_FOR_USER',step:key,confidence,needs_user:true});
+  }
 
   if(key==='payment' && !String(c.transaction_reference||'').trim() && evidence.length===0){
     await db.query('UPDATE recovery_cases SET status=$1,updated_at=now() WHERE id=$2',['WAITING_FOR_USER',c.id]);
@@ -160,7 +184,7 @@ export default async function(req,res){
     return res.json({ok:true,status:'WAITING_FOR_USER',step:key,reason:'REFERENCE_OR_PROOF_REQUIRED',confidence});
   }
 
-  const next=STEPS.findIndex(s=>s[0]===key)+1;
+  const next=key==='payment' ? STEPS.length : STEPS.findIndex(s=>s[0]===key)+1;
   if(next<STEPS.length){
     await scheduleNext(c.id,c.user_id);
   }else{
