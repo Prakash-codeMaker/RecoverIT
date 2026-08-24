@@ -132,7 +132,7 @@
         <div><div class="eyebrow">YOUR NEXT STEP</div><h3>${esc(waiting ? (data.guidance || 'We need one more thing from you.') : (data.guidance || 'Nothing needed right now.'))}</h3></div>
         ${waiting ? '<button class="next-action" id="nextStepButton" type="button">Add details <span>→</span></button>' : '<div class="next-arrow">→</div>'}
       </div>
-      ${waiting ? `<div class="context-modal" id="contextModal" aria-hidden="true"><div class="context-backdrop" data-close-context></div><section class="context-dialog" role="dialog" aria-modal="true" aria-labelledby="contextTitle"><button class="context-close" id="contextClose" type="button" aria-label="Close">×</button><div class="eyebrow">CONTINUE THE INVESTIGATION</div><h2 id="contextTitle">Give RecoverIT one more signal.</h2><p class="muted">Add the transaction/reference number or paste the provider's response. You can also attach new proof. RecoverIT will immediately re-run the AI reconciliation.</p><label>Transaction / reference number<input id="contextReference" autocomplete="off" placeholder="e.g. UTR, RRN, transaction ID"></label><label>Provider / merchant response<textarea id="contextResponse" rows="5" placeholder="Paste the message, email, or response you received…"></textarea></label><label class="context-upload">Add new proof<input id="contextFile" type="file" accept="image/jpeg,image/png,image/webp,application/pdf,video/mp4"><span>Receipt, bank statement, refund message, screenshot or video</span></label><div class="context-actions"><button class="btn" id="contextCancel" type="button">Not now</button><button class="btn primary" id="contextSubmit" type="button">Send to RecoverIT AI →</button></div><div class="context-status" id="contextStatus"></div></section></div>` : ''}
+      ${waiting ? `<div class="context-modal" id="contextModal" aria-hidden="true"><div class="context-backdrop" data-close-context></div><section class="context-dialog" role="dialog" aria-modal="true" aria-labelledby="contextTitle"><button class="context-close" id="contextClose" type="button" aria-label="Close">×</button><div class="eyebrow">CONTINUE THE INVESTIGATION</div><h2 id="contextTitle">Give RecoverIT one more signal.</h2><p class="muted">Choose how you want to tell RecoverIT what happened. You can type, paste the provider response, or simply speak naturally.</p><div class="context-voice" id="contextVoice"><button class="context-voice-button" id="contextVoiceButton" type="button" aria-label="Speak provider response">●</button><div><strong id="contextVoiceTitle">Speak your provider response</strong><p id="contextVoiceState">Tell RecoverIT what the merchant, bank, wallet or payment provider told you. Your speech will appear in the response box.</p></div></div><label>Transaction / reference number<input id="contextReference" autocomplete="off" placeholder="e.g. UTR, RRN, transaction ID"></label><label>Provider / merchant response<textarea id="contextResponse" rows="6" placeholder="Paste or type the message, email, call summary, or response you received…"></textarea></label><label class="context-upload">Add new proof<input id="contextFile" type="file" accept="image/jpeg,image/png,image/webp,application/pdf,video/mp4"><span>Receipt, bank statement, refund message, screenshot or video</span></label><div class="context-actions"><button class="btn" id="contextCancel" type="button">Not now</button><button class="btn primary" id="contextSubmit" type="button">Send to RecoverIT AI →</button></div><div class="context-status" id="contextStatus"></div></section></div>` : ''}
 
       <div class="proof-line"><span>${evidence.length} proof file${evidence.length === 1 ? '' : 's'}</span><span>Evidence is checked as new information arrives</span></div>
     `;
@@ -145,6 +145,54 @@
       document.getElementById('contextClose')?.addEventListener('click', close);
       document.getElementById('contextCancel')?.addEventListener('click', close);
       modal.querySelector('[data-close-context]')?.addEventListener('click', close);
+
+      const voiceButton = document.getElementById('contextVoiceButton');
+      const voiceTitle = document.getElementById('contextVoiceTitle');
+      const voiceState = document.getElementById('contextVoiceState');
+      let voiceRecognition = null;
+      let voiceListening = false;
+      const stopContextVoice = () => {
+        try { voiceRecognition?.stop(); } catch (_) {}
+        voiceListening = false;
+        voiceButton?.classList.remove('listening');
+        if (voiceButton) voiceButton.textContent = '●';
+        if (voiceTitle) voiceTitle.textContent = 'Speak your provider response';
+        if (voiceState) voiceState.textContent = 'Tell RecoverIT what the merchant, bank, wallet or payment provider told you. Your speech will appear in the response box.';
+      };
+      voiceButton?.addEventListener('click', () => {
+        const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!Speech) {
+          if (voiceState) voiceState.textContent = 'Voice input is not available in this browser. You can type or paste the response instead.';
+          return;
+        }
+        if (voiceListening) { stopContextVoice(); return; }
+        voiceRecognition = new Speech();
+        voiceRecognition.lang = 'en-IN';
+        voiceRecognition.continuous = true;
+        voiceRecognition.interimResults = true;
+        voiceRecognition.onstart = () => {
+          voiceListening = true;
+          voiceButton.classList.add('listening');
+          voiceButton.textContent = '■';
+          voiceTitle.textContent = 'Listening…';
+          voiceState.textContent = 'Speak naturally. Press ■ when you are finished.';
+        };
+        voiceRecognition.onresult = (event) => {
+          let transcript = '';
+          for (let i = 0; i < event.results.length; i++) transcript += event.results[i][0].transcript + ' ';
+          const responseBox = document.getElementById('contextResponse');
+          if (responseBox) responseBox.value = transcript.trim();
+        };
+        voiceRecognition.onerror = (event) => {
+          if (voiceState) voiceState.textContent = 'Voice input stopped: ' + event.error + '. You can continue by typing.';
+          stopContextVoice();
+        };
+        voiceRecognition.onend = () => {
+          if (voiceListening) stopContextVoice();
+        };
+        try { voiceRecognition.start(); } catch (_) { stopContextVoice(); }
+      });
+
       document.getElementById('contextSubmit')?.addEventListener('click', async () => {
         const button = document.getElementById('contextSubmit');
         const status = document.getElementById('contextStatus');
@@ -250,7 +298,8 @@
 
   load();
   pollTimer = setInterval(() => {
-    if (!document.hidden && !busy) load();
+    const contextOpen = document.getElementById('contextModal')?.classList.contains('open');
+    if (!document.hidden && !busy && !contextOpen) load();
   }, 5000);
   window.addEventListener('beforeunload', () => clearInterval(pollTimer));
 })();
