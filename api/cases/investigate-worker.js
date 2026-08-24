@@ -1,9 +1,8 @@
-import { db, ai, scheduler } from 'hatchable';
+import { db, ai, scheduler, email } from 'hatchable';
 import { getCase, addEvent } from 'lib/case.js';
 
 export const access='scheduler';
 export const methods=['POST'];
-export const schedule='0 * * * *';
 
 const STEPS=[
   ['payment','Understand your story'],
@@ -28,8 +27,12 @@ async function scheduleNext(caseId,userId){
   await scheduler.at(new Date(Date.now()+1200).toISOString(),'/api/cases/investigate-worker',{payload:{case_id:caseId,user_id:userId}});
 }
 async function notify(userId,caseId,title,description){
-  const recent=await db.query('SELECT id FROM notifications WHERE user_id=$1 AND case_id=$2 AND title=$3 AND created_at>now()-interval \'30 minutes\' LIMIT 1',[userId,caseId,title]);
-  if(!recent.rows[0]) await db.query('INSERT INTO notifications (user_id,case_id,type,title,description) VALUES ($1,$2,$3,$4,$5)',[userId,caseId,'case_update',title,description]);
+  const recent=await db.query('SELECT id FROM notifications WHERE user_id=$1 AND case_id=$2 AND title=$3 AND created_at>now()-interval \'6 hours\' LIMIT 1',[userId,caseId,title]);
+  if(recent.rows[0])return;
+  await db.query('INSERT INTO notifications (user_id,case_id,type,title,description) VALUES ($1,$2,$3,$4,$5)',[userId,caseId,'case_update',title,description]);
+  const user=await db.query('SELECT email FROM users WHERE id=$1',[userId]);
+  const to=user.rows[0]?.email;
+  if(to){try{await email.send({to,subject:`RecoverIT · ${title}`,html:`<div style="font-family:Arial,sans-serif;max-width:620px"><h2>${title}</h2><p>${description}</p><p><a href="https://recoverit.hatchable.site/case.html?case_id=${encodeURIComponent(caseId)}">Open your RecoverIT case</a></p></div>`});}catch(_){/* in-app notification remains authoritative */}}
 }
 async function aiInvestigate(c,step,evidence,provider,previous){
   const facts={
