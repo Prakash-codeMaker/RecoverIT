@@ -27,9 +27,6 @@ async function setStep(id,key,status,detail){
 async function scheduleNext(caseId,userId){
   await scheduler.at(new Date(Date.now()+1200).toISOString(),'/api/cases/investigate-worker',{payload:{case_id:caseId,user_id:userId}});
 }
-async function scheduleMonitor(caseId,userId){
-  await scheduler.at('0 * * * *','/api/cases/investigate-worker',{payload:{case_id:caseId,user_id:userId},name:`recoverit-monitor-${caseId}`});
-}
 async function notify(userId,caseId,title,description){
   const recent=await db.query('SELECT id FROM notifications WHERE user_id=$1 AND case_id=$2 AND title=$3 AND created_at>now()-interval \'30 minutes\' LIMIT 1',[userId,caseId,title]);
   if(!recent.rows[0]) await db.query('INSERT INTO notifications (user_id,case_id,type,title,description) VALUES ($1,$2,$3,$4,$5)',[userId,caseId,'case_update',title,description]);
@@ -149,12 +146,12 @@ export default async function(req,res){
       await db.query('UPDATE recovery_cases SET status=$1,updated_at=now() WHERE id=$2',['INVESTIGATING',c.id]);
       await addEvent(c.id,'Provider monitoring continues','No matching provider event is visible yet. RecoverIT will keep checking the provider trail automatically and update you when something changes.','INVESTIGATING','RecoverIT AI',confidence);
       await notify(c.user_id,c.id,'Investigation continues','RecoverIT could not verify a provider-side event yet. It will keep checking automatically; no action is needed right now.');
-      await scheduleMonitor(c.id,c.user_id);
+      // The global hourly monitor keeps this case active.
     }else{
       await db.query('UPDATE recovery_cases SET status=$1,updated_at=now() WHERE id=$2',['INVESTIGATING',c.id]);
       await addEvent(c.id,'Investigation remains active','RecoverIT found provider-side evidence and will continue reconciling new events until the case reaches a defensible resolution.','INVESTIGATING','RecoverIT AI',confidence);
       await notify(c.user_id,c.id,'New investigation pass complete','RecoverIT has new provider evidence and is continuing reconciliation. You will be asked for information only if the case requires it.');
-      await scheduleMonitor(c.id,c.user_id);
+      // The global hourly monitor keeps this case active.
     }
   }
   res.json({ok:true,status:'INVESTIGATING',step:key,confidence});
