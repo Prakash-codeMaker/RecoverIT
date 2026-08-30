@@ -21,8 +21,11 @@ export default async function(req,res){
   if(!visitorId || !sessionId) return res.status(400).json({error:'Visitor and session identifiers are required.'});
 
   const meta=b.metadata && typeof b.metadata==='object' ? b.metadata : {};
-  const userId=req.member?.id || req.user?.id || null;
-  const caseId=b.case_id || null;
+  // Product analytics is intentionally non-sensitive and may be emitted anonymously.
+  // Keep public writes detached from account/case ownership so table RLS cannot turn
+  // harmless landing-page telemetry into a 500 response.
+  const userId=null;
+  const caseId=null;
   const path=clean(b.path,300);
   const referrer=clean(b.referrer,500);
   const utmSource=clean(b.utm_source,120);

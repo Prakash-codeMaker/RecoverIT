@@ -1,0 +1,1 @@
+CREATE POLICY product_signals_public_insert ON product_signals FOR INSERT TO public WITH CHECK (user_id IS NULL)
