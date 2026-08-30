@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS visitor_sessions (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), visitor_id text NOT NULL, session_id text NOT NULL, first_seen_at timestamptz NOT NULL DEFAULT now(), last_seen_at timestamptz NOT NULL DEFAULT now(), first_path text, last_path text, referrer text, utm_source text, utm_medium text, utm_campaign text, UNIQUE(visitor_id, session_id))
