@@ -21,7 +21,7 @@
     <h1>When money<br>goes <em>missing.</em><br>We follow it.</h1>
     <p class="hero-lede">RecoverIT investigates payment and refund problems, reconstructs what happened, finds the safest next step, and keeps the case moving until it is resolved.</p>
     <div class="actions hero-meta"><a class="btn primary" href="/report.html">Check my payment issue →</a><a class="btn ghost" href="#try">See a real example</a></div>
-    <div class="hero-meta"><span class="micro"><b>UPI</b> · cards · bank rails · merchant systems</span><span class="micro">AI investigation + deterministic money protection</span></div><div class="signup-note"><span>✓</span><b>Free to start</b><span>·</span><span>Passwordless email sign-in</span><span>·</span><span>Keep your case monitored</span></div>
+    <div class="hero-meta"><span class="micro"><b>UPI</b> · cards · bank rails · merchant systems</span><span class="micro">AI investigation + deterministic money protection</span></div><div class="signup-note"><span>✓</span><b>Free to start</b><span>·</span><span>Passwordless sign-in</span><span>·</span><span>Your case stays monitored</span></div><div class="signup-note" style="margin-top:10px"><span>→</span><span>Get a free payment check first. Create an account only when you want to save and monitor the case.</span></div>
   </div>
   <div class="hero-visual reveal delay1">
     <div class="photo-stage"><img src="/india/mumbai-rickshaws.jpg" alt="Rickshaws moving through Mumbai" data-parallax=".035"><div class="wash"></div></div>
@@ -58,7 +58,7 @@
   </div>
 </section>
 
-<section class="section section-tight conversion-section" id="try">
+<section class="section section-tight conversion-section" id="try"><div class="signal-panel reveal" style="margin-bottom:24px"><div><strong>Know someone dealing with a payment problem?</strong><div class="micro" style="margin-top:7px">Send them the free payment check — they can understand the issue before creating a case.</div></div><button class="btn ghost" id="shareRecoverIT" type="button">Share RecoverIT →</button></div>
   <div class="conversion-head reveal"><div><div class="eyebrow">SEE IT BEFORE YOU SIGN UP</div><h2>Start with the problem you actually have.</h2><p class="muted">No account is needed to understand the flow. Pick a situation, see how RecoverIT investigates it, then start your own case when you're ready.</p></div><a class="btn primary" href="/report.html">Start my case →</a></div>
   <div class="problem-picker reveal delay1">
     <button class="problem-choice active" data-case="refund"><span>01</span><b>Refund never arrived</b><small>Refund says processed. Your account says otherwise.</small></button>
@@ -121,6 +121,6 @@ const input=document.getElementById('quickCheckInput'),btn=document.getElementBy
 document.querySelectorAll('.problem-choice').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.problem-choice').forEach(x=>x.classList.remove('active'));b.classList.add('active');input.value=b.dataset.example;const d=data[b.dataset.case];image.src=d.img;title.textContent=d.title;text.textContent=d.text;input.focus()}));
 btn.addEventListener('click',async()=>{const description=input.value.trim();if(!description){input.focus();return}btn.disabled=true;btn.textContent='Checking…';try{const r=await fetch('/api/payment/check',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({description})});const d=await r.json();if(!r.ok)throw Error(d.error||'Could not check this yet.');title.textContent=d.label+' · '+d.readiness+'% ready';text.textContent=d.missing.length?'We can start, but to make the investigation stronger you may still need: '+d.missing.join(', ')+'.':'You have a strong starting signal. Save this as a full RecoverIT case when you are ready.';result.style.display='flex';result.innerHTML='<span>✓</span><b>Preliminary check complete</b><span>·</span><span>'+d.questions[0]+'</span><span>·</span><a href="/report.html">Open full investigation →</a>'}catch(e){title.textContent='We could not check that yet';text.textContent=e.message}finally{btn.disabled=false;btn.textContent='Check my payment →'}});
 })();
-</script><script src="/motion.js"></script>
+</script><script src="/motion.js"></script><script src="/growth.js"></script><script>(function(){const b=document.getElementById('shareRecoverIT');if(b)b.onclick=async()=>{const data={title:'RecoverIT — payment recovery',text:'Having a payment or refund problem? RecoverIT helps investigate it and keeps the case moving.',url:location.origin};try{if(navigator.share){await navigator.share(data);window.RecoverITGrowth?.track('case_action',{action:'share',channel:'native'})}else{await navigator.clipboard.writeText(location.origin);b.textContent='Link copied ✓';window.RecoverITGrowth?.track('case_action',{action:'share',channel:'clipboard'});setTimeout(()=>b.textContent='Share RecoverIT →',1800)}}catch(e){}}})();</script>
 <script>(async function(){try{const s=await window.hatchable.auth.getSession();const c=document.getElementById('authCta');if(s&&s.user){c.textContent='Dashboard →';c.href='/app.html';}}catch(e){}})();</script>
 </body></html>

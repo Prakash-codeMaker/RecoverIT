@@ -1,5 +1,3 @@
-[![Deploy to Hatchable](https://hatchable.com/deploy-button.svg)](https://hatchable.com/deploy?repo=https://github.com/Prakash-codeMaker/RecoverIT)
-
 # RecoverIT
 
 > **Your payment problem doesn't end when you report it.**
