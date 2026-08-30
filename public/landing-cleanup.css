@@ -1,2 +1,11 @@
 /* Premium landing-page cleanup: hide redundant case animation section without touching app logic. */
-#cases { display: none !important; }
+/* Keep the landing page focused: the interactive checker is the single product demo. */
+#cases, #try, #why { display: none !important; }
+
+/* Conversion-first spacing and hierarchy. */
+.hero .hero-copy { max-width: 760px; }
+.hero-lede { max-width: 650px; }
+#checker { padding-top: 72px; }
+#checker .conversion-head h2 { max-width: 700px; }
+#checker .conversion-demo { box-shadow: 0 24px 70px rgba(0,0,0,.18); }
+@media (max-width: 700px) { #checker { padding-top: 48px; } }
