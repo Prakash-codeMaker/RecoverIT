@@ -8,7 +8,7 @@ function clean(value, fallback='Not provided') {
   return s || fallback;
 }
 function pdfText(value) {
-  return clean(value).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');
+  return clean(value).replaceAll('₹','INR ').replaceAll('·','-').replace(/[^\x20-\x7E]/g,'?').replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');
 }
 function wrap(value, width=92) {
   const text=clean(value,'');
