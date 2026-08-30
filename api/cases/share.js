@@ -10,7 +10,7 @@ export default async function(req,res){
   const actualCaseId=rows[0].id;
   const token=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');
   try {
-    await db.query('INSERT INTO case_shares (case_id,token,created_by,expires_at) VALUES ($1,$2,$3,now()+interval \'30 days\')',[actualCaseId,token,req.user.id]);
+    await db.query('INSERT INTO case_shares (case_id,token,created_by,expires_at) VALUES ($1,$2,$3,now()+interval \'30 days\')',[actualCaseId,token,String(req.user.id)]);
   } catch (e) {
     return res.status(500).json({error:'RecoverIT could not create the share link. Please try again.'});
   }

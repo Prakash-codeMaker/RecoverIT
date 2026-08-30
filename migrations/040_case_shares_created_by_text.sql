@@ -1,0 +1,1 @@
+ALTER TABLE case_shares ALTER COLUMN created_by TYPE text USING created_by::text;
