@@ -1,5 +1,5 @@
 import { db } from 'hatchable';
-export const access='member'; export const methods=['GET','POST'];
+export const access='user'; export const methods=['GET','POST'];
 const esc=v=>String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 const providers={
   upi:{label:'UPI',channels:['bank/payment app','NPCI route'],next:'Check the transaction/reference status with the payment app or bank first.'},
@@ -12,7 +12,7 @@ const providers={
 };
 function providerFor(c){const x=(c.payment_method||'').toLowerCase();if(x.includes('phonepe'))return 'phonepe';if(x.includes('google')||x.includes('gpay'))return 'gpay';if(x.includes('paytm'))return 'paytm';if(x.includes('card'))return 'card';if(x.includes('bank')||x.includes('transfer'))return 'bank';if(x.includes('upi'))return 'upi';return 'other'}
 async function own(id,user){const r=await db.query('SELECT * FROM recovery_cases WHERE id=$1 AND user_id=$2',[id,user]);return r.rows[0]}
-export default async function(req,res){const id=req.query?.case_id||req.body?.case_id;if(!id)return res.status(400).json({error:'case_id is required'});const c=await own(id,req.member.id);if(!c)return res.status(404).json({error:'Case not found'});const key=providerFor(c),p=providers[key];
+export default async function(req,res){const id=req.query?.case_id||req.body?.case_id;if(!id)return res.status(400).json({error:'case_id is required'});const c=await own(id,req.user.id);if(!c)return res.status(404).json({error:'Case not found'});const key=providerFor(c),p=providers[key];
  if(req.method==='POST'){const action=req.body?.action;const payload=req.body?.payload||{};if(!['provider','escalation','contact'].includes(action))return res.status(400).json({error:'Unsupported action'});await db.query('INSERT INTO case_contact_tools(case_id,provider,channel,payload) VALUES($1,$2,$3,$4::jsonb)',[id,key,action,JSON.stringify(payload)]);return res.json({ok:true})}
  const facts={case_number:c.case_number,issue_type:c.issue_type,description:c.description,amount:c.amount,currency:c.currency,merchant_name:c.merchant_name,transaction_reference:c.transaction_reference,payment_method:c.payment_method};
  const complaint=`Subject: Payment dispute — ${c.case_number}\n\nI am requesting assistance with the payment issue described below.\n\nCase: ${c.case_number}\nIssue: ${c.issue_type}\nAmount: ${c.amount??'Not provided'} ${c.currency}\nPayment method: ${c.payment_method||'Not provided'}\nMerchant/provider: ${c.merchant_name||'Not provided'}\nTransaction/reference: ${c.transaction_reference||'Not provided'}\n\nWhat happened:\n${c.description}\n\nRequested resolution:\nPlease investigate the transaction, confirm its current status, and resolve or return the disputed amount where applicable. I can provide supporting evidence and the RecoverIT case record on request.`;
