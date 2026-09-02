@@ -1,693 +1,377 @@
-[![Deploy to Hatchable](https://hatchable.com/deploy-button.svg)](https://hatchable.com/deploy?repo=https://github.com/Prakash-codeMaker/RecoverIT)
-
 # RecoverIT
 
-> ## AI revenue recovery, from messy payment story to verified action.
->
-> RecoverIT is being built as a **payment-resolution layer**: it turns fragmented payment evidence into a persistent case, determines the next legitimate recovery step, asks the user before consequential action, and keeps the workflow moving until there is an outcome.
+<p align="center">
+  <img src="./public/assets/recoverit-demo-case.svg" alt="RecoverIT payment recovery workflow" width="920" />
+</p>
 
-[![Status](https://img.shields.io/badge/status-active%20product%20build-orange)](https://recoverit.hatchable.site)
-[![Built with](https://img.shields.io/badge/built%20with-Hatchable-black)](https://hatchable.ai)
-[![AI](https://img.shields.io/badge/AI-multimodal%20%2B%20provider%20failover-blue)](https://ai.google.dev/)
-[![Workflow](https://img.shields.io/badge/workflow-durable%20%26%20auditable-brightgreen)](./public/assets/recoverit-workflow.svg)
+<p align="center"><strong>AI revenue recovery for payment problems — from messy evidence to a verified, bounded action.</strong></p>
 
-### Start here
+<p align="center">
+  <a href="https://recoverit.hatchable.site">Live product</a> ·
+  <a href="https://recoverit.hatchable.site/report.html">Try a payment check</a> ·
+  <a href="./public/docs/ARCHITECTURE.md">Architecture</a> ·
+  <a href="./public/docs/WORKFLOW.md">Workflow</a> ·
+  <a href="./public/docs/EVALUATION.md">Evaluation</a>
+</p>
 
-**Live product:** https://recoverit.hatchable.site  ·  **Repository thesis:** AI interprets; deterministic controls decide.
+<p align="center">
+  <img src="https://img.shields.io/badge/status-active%20product%20build-orange" alt="active product build" />
+  <img src="https://img.shields.io/badge/workflow-durable%20%26%20auditable-brightgreen" alt="durable workflow" />
+  <img src="https://img.shields.io/badge/AI-multimodal%20%2B%20failover-blue" alt="multimodal AI" />
+</p>
 
-![RecoverIT judge demo](./public/assets/recoverit-demo-case.svg)
-
-> **The product loop:** report → understand → verify → investigate → route → user approval → recover → monitor → resolve.
+> **Core thesis:** **AI interprets. Deterministic controls decide.**
 
 ---
 
-## What RecoverIT is becoming
+## 01 · See the product
 
-RecoverIT should not feel like a complaint form with an AI chatbot attached. The long-term product is a **resolution system for money problems** where the unit of work is a durable case, not a conversation.
+RecoverIT is intentionally **not** presented as a chatbot. The customer gives the system one payment story; RecoverIT turns it into a durable case, builds the evidence trail, determines what is safe to do next, asks for approval before consequential action, and keeps monitoring until an outcome exists.
+
+![Animated recovery workflow](./public/assets/recoverit-workflow-animated.svg)
+
+### One case, one operating loop
 
 ```text
-Payment problem
-      ↓
-Persistent case
-      ↓
-Evidence + payment facts
-      ↓
-AI interpretation
-      ↓
-Deterministic safety gates
-      ↓
-Legitimate recovery route
-      ↓
-Explicit user approval
-      ↓
-External action / guided handoff
-      ↓
-Provider response + monitoring
-      ↓
-Recovery / escalation / resolution
+REPORT → VERIFY → INVESTIGATE → ROUTE → APPROVE → MONITOR → RESOLVE
 ```
 
-The company opportunity is to make fragmented payment-resolution work **executable, measurable and increasingly routable** across merchants, gateways, banks, UPI and other payment contexts. The current build is an early product foundation; scale claims beyond the demonstrated system are intentionally treated as roadmap, not as already-achieved production volume.
+The animated diagram above is the public product story. The detailed technical state machine is below.
 
-![RecoverIT product-to-company thesis](./public/assets/recoverit-company-loop.svg)
-
-### Why this matters
-
-Payment support is fragmented across the user, merchant, payment gateway, bank, UPI rail, refund system and support queue. RecoverIT's product thesis is that the missing layer is not another place to file a complaint. It is a system that can **reconstruct the case, preserve state, select a legitimate next step, execute only within explicit bounds, and remain on the thread until the outcome is confirmed**.
+[Open the interactive product →](https://recoverit.hatchable.site)
 
 ---
 
-## Why RecoverIT?
+## 02 · A concrete recovery journey
 
-Payment disputes are rarely as simple as "raise a complaint." A user may know that money was deducted, a refund was promised, or a transaction failed, but still have no idea:
+**Example:** a customer says a ₹18,500 refund was marked processed, but the money never reached the original payment account.
 
-- what actually happened;
-- which evidence matters;
-- who needs to be contacted;
-- what to do next;
-- whether they should wait or escalate; or
-- whether the issue has genuinely been resolved.
+| Step | RecoverIT does | Customer sees |
+|---|---|---|
+| **Report** | turns the natural-language story into a case | one clear starting point |
+| **Verify** | checks the attached proof | whether evidence is accepted |
+| **Investigate** | reconstructs payment + refund facts | what is known / unknown |
+| **Route** | prepares the legitimate provider path | exactly who will be contacted and why |
+| **Approve** | blocks consequential action until consent | exact message, destination and evidence |
+| **Monitor** | waits for provider response and schedules follow-up | only the next useful update |
+| **Resolve** | confirms the actual outcome | resolved / escalated / needs action |
 
-RecoverIT is built around a different model:
+![Case state machine](./public/assets/recoverit-state-machine.svg)
+
+---
+
+## 03 · Why this is a product, not an AI demo
+
+Most payment-support experiences stop at **“here is what you could try.”** RecoverIT is built around a different unit of work:
 
 ```text
-User story
+conversation
     ↓
-Understand the problem
+DURABLE CASE
     ↓
-Verify identity + payment facts
+evidence + payment facts + workflow state
     ↓
-Collect and review evidence
+NEXT SAFE ACTION
     ↓
-Investigate
+external response
     ↓
-Give one clear next action
-    ↓
-Monitor the case
-    ↓
-Notify the user when something changes
-    ↓
-Escalate when appropriate
-    ↓
-Confirm the real outcome
+outcome
 ```
 
-The goal is not to generate a generic complaint and leave the user alone. The goal is to create a **living case** that can continue moving toward a real outcome.
+The case can continue after the browser closes because the next step is persisted as product state instead of living only in a chat history.
+
+### Product principles
+
+**Outcome over model output.** The user cares about the money, not the inference.
+
+**Uncertainty is a state.** If evidence is incomplete or a verifier is unavailable, RecoverIT waits, retries, or asks for what is missing rather than inventing a payment state.
+
+**Human authorization for consequential action.** A prepared route is not a sent route. The final action requires explicit user approval.
+
+**Provider-specific execution.** The same recovery workflow can route through different payment, bank, UPI and merchant contexts.
 
 ---
 
-## Product principles
+## 04 · AI is inside a hard boundary
 
-### 1. Outcome over AI
+![Animated AI safety boundary](./public/assets/recoverit-ai-boundary-animated.svg)
 
-The user does not care that an AI model ran an inference. They care about what happened to their money and what they should do next.
+### AI handles interpretation
 
-RecoverIT therefore keeps AI behind the product experience and exposes useful outcomes such as:
+- natural-language payment stories
+- multimodal document understanding
+- structured fact extraction
+- missing-information detection
+- provider-response interpretation
+- route / message preparation
 
-- **Payment verified**
-- **Evidence needed**
-- **Provider response received**
-- **Evidence conflict found**
-- **Action required**
-- **Waiting for provider**
-- **Escalation prepared**
-- **Resolved**
+### Deterministic systems handle authority
 
-### 2. AI where judgment helps; deterministic systems where certainty matters
+- authentication and ownership
+- transaction/reference values
+- timestamps and amounts
+- evidence state and thresholds
+- case-state transitions
+- duplicate-action protection
+- user approval
+- idempotency and safe execution
+- monitoring / notification schedules
+- escalation eligibility
+- resolution confirmation
 
-RecoverIT deliberately does **not** use AI for everything.
-
-**AI is useful for:**
-
-- understanding natural-language payment stories;
-- extracting structured facts from messy descriptions;
-- interpreting provider responses;
-- reviewing evidence context;
-- identifying missing information;
-- explaining complicated payment journeys in simple language;
-- preparing provider-specific messages and escalation drafts;
-- multilingual and voice-based interaction.
-
-**Deterministic logic is preferred for:**
-
-- authentication and authorization;
-- case ownership;
-- transaction/reference data;
-- timestamps and amounts;
-- case states;
-- evidence presence;
-- monitoring schedules;
-- notification delivery;
-- escalation eligibility rules;
-- resolution confirmation;
-- database integrity.
-
-This separation is intentional: AI should help reason about uncertainty, not invent payment states.
-
-### 3. Never assume a payment state without reliable evidence
-
-If an AI provider is unavailable or evidence is incomplete, RecoverIT should preserve uncertainty rather than manufacture an answer.
-
-For example:
-
-> "We could not verify the refund yet. The case remains open and needs additional evidence."
-
-is preferable to an unsupported claim that a refund was or was not received.
+This boundary is enforced in the product code, not just described in the README.
 
 ---
 
-## Core capabilities
+## 05 · Architecture at a glance
 
-### 🧾 Case registration
+```mermaid
+flowchart LR
+    U[Customer story + evidence] --> C[Case]
+    C --> B[Case Brain]
+    B --> A[AI interpretation]
+    A --> W[Durable Workflow]
+    W --> G[Deterministic Gates]
+    G --> R[Provider-specific route]
+    R --> P[User approval]
+    P --> X[External action / guided handoff]
+    X --> M[Monitoring + provider response]
+    M --> W
+    W --> O[Outcome / escalation / resolution]
+```
 
-Users can describe a payment problem using natural language instead of having to understand financial terminology first.
-
-The system supports:
-
-- text descriptions;
-- voice-based reporting;
-- transaction/reference information;
-- provider or merchant responses;
-- evidence uploads.
-
-### 🔎 AI-assisted investigation
-
-RecoverIT can turn a user's story and available evidence into structured investigation context and explain what is known, unknown, and required next.
-
-### 🧩 Evidence management
-
-Users can provide supporting material such as:
-
-- receipts;
-- bank statements;
-- refund confirmations;
-- screenshots;
-- provider responses;
-- payment references;
-- other relevant proof.
-
-### 🛡️ Identity verification
-
-Cases are tied to the authenticated user account so investigation and case history can continue without repeatedly asking the user to identify themselves.
-
-### 🧠 Resolution engine
-
-Cases are treated as living resolution workflows rather than static complaint forms.
-
-A case can move through stages such as:
+### The durable orchestration layer
 
 ```text
-Understand
-→ Verify
-→ Check proof
-→ Investigate
-→ Recovery plan
-→ User action / Provider waiting
-→ Monitor
-→ Resolve
-```
-
-### 🔄 Continuous monitoring
-
-Active cases can be checked by background jobs. RecoverIT can surface meaningful changes and determine when the user needs to pay attention.
-
-The system is designed around **meaningful updates**, not noisy "AI is thinking" notifications.
-
-### 🔔 User notifications
-
-When a case requires attention or receives a meaningful update, RecoverIT can surface the update through the product's notification and email-update workflows.
-
-Examples:
-
-> **Action needed:** Add the transaction reference so the investigation can continue.
-
-or:
-
-> **New provider response:** RecoverIT found a discrepancy between the response and the evidence you supplied.
-
-### 🏦 Provider intelligence
-
-RecoverIT includes provider-oriented workflows and intelligence designed to make investigations more specific to the payment ecosystem involved.
-
-The architecture can be extended with provider playbooks for UPI, wallets, cards, banks, merchants, payment gateways, telecom services, and other payment contexts.
-
-### 📦 Dispute Pack
-
-RecoverIT can prepare a structured escalation package containing relevant case facts, evidence, timeline, provider responses, and the requested resolution.
-
-The user remains in control of consequential escalation actions.
-
-### 📈 Outcome learning
-
-User feedback and case outcomes are captured as product signals so future versions can learn which workflows, questions, evidence requests, and resolution paths are actually useful.
-
-The objective is to optimize for **real resolution**, not simply more AI activity.
-
-### 🛡️ Payment Protection
-
-RecoverIT includes a foundation for personal payment/refund monitoring so users can keep track of active payment issues and return to cases that need attention.
-
----
-
-## Architecture
-
-RecoverIT is currently implemented as a full-stack web application on Hatchable.
-
-```text
-                         ┌─────────────────────┐
-                         │   RecoverIT Web UI   │
-                         │ Landing / Dashboard │
-                         │ Case / Evidence     │
-                         └──────────┬──────────┘
-                                    │
-                         authenticated API calls
-                                    │
-             ┌──────────────────────┴──────────────────────┐
-             │                                             │
-     ┌───────▼────────┐                           ┌────────▼────────┐
-     │ Case workflows │                           │ User services   │
-     │ Investigation  │                           │ Notifications   │
-     │ Evidence       │                           │ Feedback        │
-     │ Resolution     │                           │ Verification    │
-     └───────┬────────┘                           └────────┬────────┘
-             │                                             │
-             └──────────────────┬──────────────────────────┘
-                                │
-                       ┌────────▼─────────┐
-                       │ PostgreSQL / DB  │
-                       │ Cases / Events   │
-                       │ Evidence / Data  │
-                       │ Workflow position│
-                       │ + next action    │
-                       └────────┬─────────┘
-                                │
-                 ┌──────────────┴──────────────┐
-                 │                             │
-        ┌────────▼────────┐           ┌────────▼────────┐
-        │ AI reasoning    │           │ Background jobs │
-        │ Gemini via      │           │ Case monitoring │
-        │ Hatchable AI    │           │ Payment monitor │
-        └─────────────────┘           └─────────────────┘
-```
-
-### Backend areas
-
-The current project includes API areas for:
-
-- account information;
-- case creation and retrieval;
-- investigation and AI reports;
-- live/quick case status;
-- evidence upload;
-- identity verification;
-- notifications;
-- payment checks and complaint preparation;
-- provider intelligence;
-- feedback and outcome signals;
-- P1/P2 case tooling;
-- resolution state and durable workflow position;
-- evidence verification and AI-provider failover;
-- dispute planning, approval, response handling, and escalation;
-- Razorpay transaction/refund and webhook handling;
-- Google Drive evidence import;
-- scheduled case, verification, payment, dispute, and workflow monitoring;
-- end-to-end recovery test scenarios.
-
-### Data model
-
-The project uses PostgreSQL migrations for its application data, including case, event, investigation, evidence, notification, feedback, provider, monitoring, analytics, escalation, and resolution functionality.
-
-Migrations are versioned in `migrations/` and applied by Hatchable during deployment.
-
----
-
-## AI architecture
-
-RecoverIT uses AI as a reasoning layer rather than as the system of record.
-
-A simplified investigation looks like:
-
-```text
-Natural-language story
+lib/case-workflow.js
         │
-        ▼
-Fact extraction
-        │
-        ├── amount
-        ├── date/time
-        ├── provider
-        ├── transaction reference
-        ├── claimed outcome
-        └── missing information
-        │
-        ▼
-Evidence + provider context
-        │
-        ▼
-AI reasoning
-        │
-        ├── what is supported?
-        ├── what is uncertain?
-        ├── what conflicts?
-        └── what information is needed?
-        │
-        ▼
-Deterministic resolution state
-        │
-        ▼
-One clear user action
-```
-
-This design is important for trust. An AI response is treated as an input to the resolution workflow, not unquestionable truth.
-
----
-
-## Continuous investigation
-
-RecoverIT is designed for cases that take time.
-
-A case can remain active while waiting for:
-
-- provider responses;
-- additional evidence;
-- refund processing;
-- payment-state changes;
-- user confirmation;
-- escalation windows.
-
-Background monitoring runs independently of the user's browser session. Users should not need to keep a page open for a case to remain active.
-
-The case monitor operates on active cases in batches, allowing the architecture to scale beyond a single user's case.
-
----
-
-## Privacy & security
-
-Payment disputes can contain highly sensitive information. RecoverIT is therefore designed around several principles:
-
-- authentication is handled by the platform;
-- case access is scoped to the authenticated user;
-- API endpoints declare access requirements;
-- secrets are stored through Hatchable's secret configuration rather than committed credentials;
-- provider webhook secrets are kept server-side;
-- AI credentials are not exposed to the browser;
-- evidence should only be accessed by authorized workflows;
-- consequential escalation actions should remain user-controlled.
-
-### Important
-
-**Never commit real API keys, webhook secrets, credentials, private certificates, customer evidence, production database exports, or other sensitive material to a public GitHub repository.**
-
-Before making this repository public, review the repository contents and Git history for secrets and personal data.
-
----
-
-## Configuration
-
-RecoverIT uses Hatchable configuration and managed services.
-
-The current production configuration includes passwordless authentication, Google-backed AI with provider failover, evidence verification, scheduled case/workflow monitoring, Razorpay transaction/refund hooks, Twilio messaging configuration, and optional Google Drive / Account Aggregator integration settings.
-
-Secrets are configured through the deployment environment rather than hard-coded into application source.
-
-Typical configuration concepts include:
-
-```toml
-[auth]
-enabled = true
-
-[ai]
-required = true
-
-# Runtime/provider settings and secrets are configured in Hatchable; do not
-# copy real credentials into this repository.
-
-[[secret]]
-key = "GOOGLE_API_KEY"
-required = true
-expose = false
-```
-
-Do **not** put actual secret values into `hatchable.toml` or GitHub.
-
----
-
-## Local / development notes
-
-The project is built for Hatchable's managed runtime.
-
-Hatchable provides the runtime services used by RecoverIT, including:
-
-- PostgreSQL access;
-- authentication;
-- AI access;
-- storage;
-- email;
-- scheduling;
-- browser capabilities;
-- deployment and API hosting.
-
-The project intentionally uses the Hatchable SDK instead of maintaining duplicate infrastructure clients.
-
-If you are developing this project outside Hatchable, you will need to provide equivalents for those managed services or adapt the application architecture accordingly.
-
----
-
-## Repository map
-
-```text
-.
-├── README.md
-├── hatchable.toml
-├── api/
-│   ├── cases/                 # case lifecycle, investigation, dispute, workflow
-│   ├── evidence/              # upload + analysis + verification
-│   ├── integrations/          # Razorpay, Google Drive and provider integrations
-│   ├── jobs/                  # background continuation and monitoring
-│   ├── payment/               # payment checks and verification
-│   ├── webhooks/              # provider/external response entry points
-│   └── ...
-├── lib/
-│   ├── case-workflow.js       # authoritative workflow engine
-│   ├── case-verification.js   # evidence verification + retries
-│   ├── case-brain.js          # case reasoning/presentation
-│   ├── recoverit-ai.js        # AI provider abstraction + failover
-│   ├── dispute.js             # route and dispute logic
-│   ├── dispute-automation.js  # continuing external workflow
-│   ├── resolution.js          # resolution/outcome logic
-│   └── integrations.js        # provider integration helpers
-├── migrations/                # 001 → 065 versioned PostgreSQL schema
-├── public/
-│   ├── index.html             # public product experience
-│   ├── app.html               # authenticated workspace
-│   ├── case.html              # live recovery case
-│   ├── report.html            # case creation/readiness
-│   ├── resolution.html        # resolution surface
-│   ├── assets/                # architecture + judge-demo visuals
-│   ├── docs/                  # architecture, workflow, safety, reliability
-│   ├── cases/                 # problem-specific visual assets
-│   └── ...
-└── pages/
-    └── share/[token].js       # secure case-share surface
+        ├── loads persisted case + evidence + dispute state
+        ├── computes the authoritative next step
+        ├── persists workflow_step / next_action / status / reason
+        ├── schedules retries and background continuation
+        └── advances after state-changing triggers
+                │
+                ▼
+api/jobs/workflow-heartbeat.js
 ```
 
 ### Product-to-code map
 
-| Product promise | Implementation |
+| Product responsibility | Primary implementation |
 |---|---|
-| Persistent case state | `lib/case-workflow.js` + `recovery_cases.workflow_*` |
-| Evidence verification | `lib/case-verification.js` + `api/evidence/*` |
-| AI interpretation | `lib/recoverit-ai.js` + `lib/case-brain.js` |
-| Safe external recovery | `lib/dispute.js` + `api/cases/dispute-*` |
-| Background continuation | `api/jobs/workflow-heartbeat.js` + scheduled workers |
-| Provider integration | `api/integrations/*` + provider directory |
-| Outcome / resolution | `lib/resolution.js` + `api/cases/resolution-state.js` |
-| End-to-end verification | `api/test-mode/e2e.js` + recovery suite |
+| Durable case lifecycle | `lib/case-workflow.js` |
+| Evidence verification | `lib/case-verification.js` |
+| AI abstraction / failover | `lib/recoverit-ai.js` |
+| Case reasoning | `lib/case-brain.js` |
+| Recovery / dispute routing | `lib/dispute.js` |
+| Recovery automation | `lib/dispute-automation.js` |
+| Resolution policy | `lib/resolution.js` |
+| External action gate | `api/cases/dispute-send.js` |
+| Workflow read / advance | `api/cases/workflow-state.js`, `api/cases/workflow-advance.js` |
+| Background continuation | `api/jobs/workflow-heartbeat.js` |
+| Razorpay integration | `api/integrations/razorpay/*` |
+| Bank / UPI reconciliation | `api/bank/reconcile.js`, `api/upi/reconcile.js` |
+| Provider directory | `api/banks/directory.js`, `api/provider-intelligence/*` |
+| End-to-end validation | `api/test-mode/e2e.js` |
 
 ---
 
-## Workflow durability
+## 06 · What happens when things fail?
 
-RecoverIT persists the current position of every active case instead of deriving the UI state from the latest browser session. The workflow ledger records:
+Production systems are defined as much by their exceptions as by the happy path.
 
-- the current workflow step;
-- the exact next action;
-- whether the case is active, waiting for the user, waiting for automation, or done;
-- the reason for the current state;
-- the trigger that last advanced the workflow;
-- when that workflow position was last reconciled.
-
-A central workflow engine reconciles this state after case creation, evidence verification, investigation progress, provider responses, outbound contact, and on a recurring heartbeat. Opening a case therefore resumes from its persisted position rather than restarting the process.
-
-This is a core reliability property of the product: **the case state is durable; the AI is not the source of truth.**
-
----
-
-## Evaluation and testability
-
-The repository includes test-mode endpoints for deterministic end-to-end recovery scenarios, duplicate-action protection, external-response loops, AI-provider probing, and integration checks. The main E2E harness is designed to verify the complete chain rather than only individual functions.
-
-The latest recorded full E2E run before the workflow-ledger changes passed **21/21 checks**. Test fixtures use synthetic data and `*.invalid` destinations; no real customer evidence or production payment credentials belong in the repository.
-
-For the Razorpay buildathon, the important outcome metrics are intended to be measured from a reproducible evaluation set rather than estimated from product activity: recovery-route accuracy, evidence-verification accuracy, successful recovery rate, amount recovered, and abstention/exception rate.
+| Exception | RecoverIT behavior |
+|---|---|
+| Evidence cannot be verified | keep case blocked from consequential recovery; ask for correct proof |
+| AI provider unavailable | preserve state, mark verification/investigation unavailable, retry |
+| Conflicting payment facts | keep uncertainty visible; do not invent the missing state |
+| Missing user information | surface a concrete next action |
+| No legitimate route | do not fabricate a destination; keep the case actionable |
+| User has not approved | action remains prepared, not sent |
+| External response arrives | feed response back into the same workflow |
+| Matching action already exists | deterministic duplicate protection prevents another matching action |
 
 ---
 
-## Product → company
+## 07 · Reliability and evaluation
 
-RecoverIT is designed to grow from a single recovery case into a reusable payment-resolution platform. The **website stays focused on the customer and the product**; the repository is where judges and engineers can inspect the infrastructure underneath: persistent workflow state, evidence verification, provider routing, monitoring, integrations, safety gates, and outcome learning.
+### End-to-end verification
+
+The repository includes a test-mode recovery harness covering the complete path from synthetic case creation through verified evidence, investigation, recovery preparation, approval gating, external response handling and resolution synchronization.
+
+**Latest recorded E2E run: 21/21 checks passed.**
+
+That is an engineering validation result, not a claim that all real-world payment cases will recover successfully.
+
+### What should be measured next
 
 ```text
-payment problem
-      ↓
-RecoverIT case
-      ↓
-verified facts + evidence + approved action
-      ↓
-reusable recovery infrastructure
-      ↓
-more providers + payment contexts
-      ↓
-more recovery coverage
+routing accuracy
+       ↓
+evidence verification accuracy
+       ↓
+workflow completion rate
+       ↓
+successful recovery rate
+       ↓
+amount recovered
+       ↓
+abstention / exception rate
 ```
 
-The website intentionally shows the **product and customer journey**. Architecture, AI boundaries, reliability, scalability, integrations, security, and evaluation live in this README and the technical documentation.
+RecoverIT deliberately does **not** invent production recovery percentages before there is a reproducible evaluation dataset.
 
-## Current status
-
-RecoverIT is an **active early-stage product build** with a working full-stack recovery workflow. It is not yet claiming production-scale financial volume; the next stage is to validate recovery quality, deepen provider coverage, harden observability, and scale the worker/integration layer.
-
-> **Repository note:** The GitHub repository is intended to publish the source code and architecture. Production credentials, database data, customer evidence, generated private assets, and deployed infrastructure state are not part of the repository.
-
-The project already contains a working foundation for:
-
-- authenticated user accounts;
-- payment-dispute case creation;
-- evidence collection;
-- AI-assisted investigation;
-- identity verification;
-- case events and status;
-- continuous case monitoring;
-- payment/refund monitoring;
-- provider intelligence;
-- notifications and email updates;
-- escalation preparation;
-- dispute-pack workflows;
-- outcome feedback;
-- personal payment protection;
-- resolution-state management.
-
-Some provider integrations and external payment-network capabilities are still evolving. RecoverIT should never claim that it directly checked a bank or provider system unless a real integration or reliable evidence supports that claim.
+[Read the evaluation methodology →](./public/docs/EVALUATION.md)
 
 ---
 
-## Roadmap
+## 08 · Integrations and expansion path
 
-### Near term
+The core workflow is provider-agnostic; integrations plug into the route and reconciliation layer.
 
-- [ ] Expand provider-specific workflows
-- [ ] Improve UPI payment-state reconciliation
-- [ ] Add more real provider integrations
-- [ ] Improve evidence extraction and verification
-- [ ] Expand multilingual voice support
-- [ ] Improve email-based case updates
-- [ ] Strengthen dispute-pack generation
-- [ ] Add more resolution outcome signals
+```text
+                    RecoverIT workflow
+                           │
+        ┌──────────────────┼──────────────────┐
+        ▼                  ▼                  ▼
+   Payment gateways      Banks               UPI
+        │                  │                  │
+   Razorpay routes     grievance paths    reconciliation
+        └──────────────────┼──────────────────┘
+                           ▼
+                  merchant / provider response
+```
 
-### Scale
+Current repository surfaces include Razorpay transaction/refund integrations, bank reconciliation, UPI reconciliation, provider directories, Google Drive evidence import paths, and communications adapters.
 
-- [ ] Distributed/batched investigation workers
-- [ ] Provider-specific resolution playbooks
-- [ ] Stronger event-driven monitoring
-- [ ] Resolution-quality evaluation
-- [ ] More robust observability
-- [ ] Privacy-preserving analytics
-- [ ] Automated escalation eligibility checks
-- [ ] Large-scale case queue management
-
-### Long-term vision
-
-RecoverIT should become a **payment-resolution layer** that can help people across millions of payment problems without turning every case into a manual support ticket.
-
-The long-term system should continuously improve from anonymized/appropriate product signals, case outcomes, provider behavior, and user feedback while keeping user data protected.
+[Read the integration notes →](./public/docs/INTEGRATIONS.md)
 
 ---
 
-## What RecoverIT is not
+## 09 · Scaling the company, not just the demo
 
-RecoverIT is not:
+The long-term opportunity is not “a better complaint form.” It is a reusable **payment-resolution network**.
 
-- a bank;
-- a payment processor;
-- a regulator;
-- a guaranteed refund service;
-- a replacement for a bank's or provider's official dispute process;
-- a system with automatic access to every user's bank account.
+```text
+one payment problem
+        ↓
+one durable recovery case
+        ↓
+verified evidence + route + outcome
+        ↓
+reusable playbook
+        ↓
+more providers / merchants / payment contexts
+        ↓
+more coverage + better operational data
+```
 
-RecoverIT helps users **understand, document, pursue, monitor, and escalate** payment disputes.
+The scaling strategy is therefore:
 
-Actual payment outcomes depend on the relevant bank, merchant, payment provider, network, evidence, and applicable dispute process.
+**Horizontal workflow scale** — background jobs and durable state continue cases without requiring an open browser.
 
----
+**Provider expansion** — provider-specific routes attach to the same core state machine.
 
-## Contributing
+**Outcome learning** — successful and failed paths can become structured operational signals.
 
-Contributions are welcome as the project moves toward a more open payment-resolution platform.
+**Safety-preserving automation** — more automation does not remove the deterministic gates around consequential actions.
 
-Good areas for contribution include:
-
-- provider-specific playbooks;
-- evidence-verification methods;
-- multilingual UX;
-- accessibility;
-- resolution-state design;
-- monitoring architecture;
-- privacy and security;
-- evaluation datasets and test scenarios;
-- developer tooling;
-- documentation.
-
-Before opening a pull request:
-
-1. Explain the problem being solved.
-2. Keep changes focused.
-3. Avoid committing secrets or real customer data.
-4. Add or update tests where appropriate.
-5. Preserve the existing authentication and case-ownership model.
-6. Avoid claiming provider/payment states that cannot be verified.
+[Read the scalability notes →](./public/docs/SCALABILITY.md)
 
 ---
 
-## Security
+## 10 · Repository map
 
-If you discover a security vulnerability, **do not open a public issue containing exploit details or sensitive information**.
+```text
+RecoverIT/
+├── README.md
+├── api/
+│   ├── cases/                 # case lifecycle, investigation, dispute, workflow
+│   ├── evidence/              # upload + analysis
+│   ├── integrations/          # Razorpay, Google Drive, integration health
+│   ├── jobs/                  # monitoring, verification, workflow heartbeat
+│   ├── bank/ + upi/           # reconciliation
+│   ├── notifications/         # user updates
+│   ├── outcomes/              # outcome learning
+│   └── test-mode/              # reproducible recovery harness
+├── lib/
+│   ├── case-workflow.js       # authoritative workflow engine
+│   ├── case-verification.js   # evidence verification
+│   ├── case-brain.js          # case reasoning
+│   ├── recoverit-ai.js        # AI abstraction / failover
+│   ├── dispute.js             # route + recovery logic
+│   ├── dispute-automation.js  # follow-ups
+│   └── resolution.js          # resolution policy
+├── migrations/                # PostgreSQL schema evolution
+├── public/                    # product UI + visual assets
+│   ├── app.html
+│   ├── case.html
+│   ├── report.html
+│   ├── resolution.html
+│   └── assets/                # diagrams used in this README
+└── pages/                     # server-rendered share pages
+```
 
-Use the repository's private security-reporting mechanism once configured, or contact the project maintainer privately.
+---
+
+## 11 · Quick start
+
+### Run the product
+
+The live product is available at:
+
+**https://recoverit.hatchable.site**
+
+Try the public payment checker first, then create a full case when you want a durable workflow.
+
+### Explore the code
+
+```bash
+# case orchestration
+grep -n "advanceCaseWorkflow" lib/case-workflow.js
+
+# evidence verification
+grep -n "analyzeDocument" lib/case-verification.js
+
+# action safety gate
+grep -n "USER_APPROVED" api/cases/dispute-send.js
+```
+
+The repository is designed to be published with the source and architecture, not production credentials, customer evidence, or private infrastructure state.
+
+---
+
+## 12 · Documentation
+
+| Document | Purpose |
+|---|---|
+| [`PRODUCT.md`](./public/docs/PRODUCT.md) | product thesis and user value |
+| [`ARCHITECTURE.md`](./public/docs/ARCHITECTURE.md) | system boundaries and major components |
+| [`WORKFLOW.md`](./public/docs/WORKFLOW.md) | durable case workflow |
+| [`AI-SAFETY.md`](./public/docs/AI-SAFETY.md) | AI vs deterministic responsibility |
+| [`RELIABILITY.md`](./public/docs/RELIABILITY.md) | failure handling and continuation |
+| [`EVALUATION.md`](./public/docs/EVALUATION.md) | reproducible evaluation plan |
+| [`INTEGRATIONS.md`](./public/docs/INTEGRATIONS.md) | provider and evidence integrations |
+| [`SCALABILITY.md`](./public/docs/SCALABILITY.md) | how the architecture can grow |
+| [`SECURITY.md`](./public/docs/SECURITY.md) | security considerations |
+| [`DEMO.md`](./public/docs/DEMO.md) | judge/demo sequence |
+
+---
+
+## 13 · Current status
+
+RecoverIT is an **active early-stage product build** with a working full-stack recovery workflow.
+
+The architecture is intentionally designed to support a future production system, but this repository does **not** claim production-scale financial volume today. The next proof points are measured recovery quality, broader provider coverage, deeper observability, and higher-confidence real-world evaluation.
+
+### The company thesis
+
+> **Start with one payment problem. Build the system that can stay with it until the money has an outcome.**
+
+That is the product. The durable workflow, provider network, evidence graph, operational data and outcome learning are what can compound into the company.
 
 ---
 
 ## License
 
-Copyright © 2026 RecoverIT.
-
-This project is currently released under the **MIT License**. See [`LICENSE`](./LICENSE).
-
----
-
-## Built with
-
-- **Hatchable** — application hosting, database, authentication, APIs, scheduling and managed services
-- **PostgreSQL** — application data and case state
-- **Gemini / Google AI** — AI-assisted investigation
-- **HTML / CSS / JavaScript** — product interface
-- **Razorpay webhook integration** — provider-event foundation
-
----
-
-## Vision
-
-> **A payment problem should not require the user to become a payment expert.**
->
-> RecoverIT is being built to understand what happened, verify what can be verified, tell the user what matters, keep the case moving, and stay with the problem until there is an outcome.
-
-**RecoverIT — keep the case moving.**
+See [`public/LICENSE`](./public/LICENSE).

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 420" role="img" aria-labelledby="t d">
+<title id="t">RecoverIT durable recovery workflow</title><desc id="d">Animated workflow from report through verification, investigation, recovery, monitoring and resolution, with a deterministic safety gate before external action.</desc>
+<defs>
+  <linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#b9f36b"/><stop offset="1" stop-color="#8bd84b"/></linearGradient>
+  <filter id="glow"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<rect width="1400" height="420" rx="32" fill="#080a0c"/>
+<text x="56" y="62" fill="#b9f36b" font-family="monospace" font-size="16" letter-spacing="3">RECOVERIT · DURABLE WORKFLOW</text>
+<text x="56" y="100" fill="#f4f5f2" font-family="Arial, sans-serif" font-size="31" font-weight="700">A case keeps moving even when the browser closes.</text>
+<g transform="translate(56 154)">
+  <line x1="74" y1="90" x2="1266" y2="90" stroke="#2a3438" stroke-width="4"/>
+  <line x1="74" y1="90" x2="1266" y2="90" stroke="url(#g)" stroke-width="4" stroke-dasharray="80 120" opacity=".9">
+    <animate attributeName="stroke-dashoffset" from="0" to="-200" dur="2.4s" repeatCount="indefinite"/>
+  </line>
+  <g font-family="Arial, sans-serif">
+    <g transform="translate(0)"><circle cx="74" cy="90" r="28" fill="#111719" stroke="#b9f36b" stroke-width="2"/><text x="74" y="96" text-anchor="middle" fill="#b9f36b" font-size="14" font-weight="700">01</text><text x="74" y="146" text-anchor="middle" fill="#f4f5f2" font-size="17" font-weight="700">Report</text><text x="74" y="168" text-anchor="middle" fill="#7f8a8c" font-size="12">story</text></g>
+    <g transform="translate(198)"><circle cx="74" cy="90" r="28" fill="#111719" stroke="#b9f36b" stroke-width="2"/><text x="74" y="96" text-anchor="middle" fill="#b9f36b" font-size="14" font-weight="700">02</text><text x="74" y="146" text-anchor="middle" fill="#f4f5f2" font-size="17" font-weight="700">Verify</text><text x="74" y="168" text-anchor="middle" fill="#7f8a8c" font-size="12">evidence</text></g>
+    <g transform="translate(396)"><circle cx="74" cy="90" r="28" fill="#111719" stroke="#b9f36b" stroke-width="2"/><text x="74" y="96" text-anchor="middle" fill="#b9f36b" font-size="14" font-weight="700">03</text><text x="74" y="146" text-anchor="middle" fill="#f4f5f2" font-size="17" font-weight="700">Investigate</text><text x="74" y="168" text-anchor="middle" fill="#7f8a8c" font-size="12">facts</text></g>
+    <g transform="translate(594)"><circle cx="74" cy="90" r="28" fill="#111719" stroke="#b9f36b" stroke-width="2"/><text x="74" y="96" text-anchor="middle" fill="#b9f36b" font-size="14" font-weight="700">04</text><text x="74" y="146" text-anchor="middle" fill="#f4f5f2" font-size="17" font-weight="700">Recover</text><text x="74" y="168" text-anchor="middle" fill="#7f8a8c" font-size="12">route</text></g>
+    <g transform="translate(792)"><circle cx="74" cy="90" r="28" fill="#111719" stroke="#b9f36b" stroke-width="2"/><text x="74" y="96" text-anchor="middle" fill="#b9f36b" font-size="14" font-weight="700">05</text><text x="74" y="146" text-anchor="middle" fill="#f4f5f2" font-size="17" font-weight="700">Approve</text><text x="74" y="168" text-anchor="middle" fill="#7f8a8c" font-size="12">user</text></g>
+    <g transform="translate(990)"><circle cx="74" cy="90" r="28" fill="#111719" stroke="#b9f36b" stroke-width="2"/><text x="74" y="96" text-anchor="middle" fill="#b9f36b" font-size="14" font-weight="700">06</text><text x="74" y="146" text-anchor="middle" fill="#f4f5f2" font-size="17" font-weight="700">Monitor</text><text x="74" y="168" text-anchor="middle" fill="#7f8a8c" font-size="12">response</text></g>
+    <g transform="translate(1188)"><circle cx="74" cy="90" r="28" fill="#111719" stroke="#b9f36b" stroke-width="2"/><text x="74" y="96" text-anchor="middle" fill="#b9f36b" font-size="14" font-weight="700">07</text><text x="74" y="146" text-anchor="middle" fill="#f4f5f2" font-size="17" font-weight="700">Resolve</text><text x="74" y="168" text-anchor="middle" fill="#7f8a8c" font-size="12">outcome</text></g>
+  </g>
+  <circle cx="74" cy="90" r="9" fill="#b9f36b" filter="url(#glow)">
+    <animate attributeName="cx" values="74;272;470;668;866;1064;1262;74" dur="6.5s" repeatCount="indefinite"/>
+  </circle>
+</g>
+<text x="56" y="370" fill="#768286" font-family="monospace" font-size="12">AI interprets uncertainty → deterministic controls gate consequential actions → workflow state persists → background workers continue.</text>
+</svg>

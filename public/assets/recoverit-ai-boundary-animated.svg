@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" role="img" aria-labelledby="t d">
+<title id="t">RecoverIT AI safety boundary</title><desc id="d">AI interpretation is separated from deterministic controls that gate consequential payment actions.</desc>
+<defs><filter id="g"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+<rect width="1200" height="560" rx="28" fill="#080a0c"/>
+<text x="48" y="58" fill="#b9f36b" font-family="monospace" font-size="15" letter-spacing="3">AI SAFETY BOUNDARY</text>
+<text x="48" y="98" fill="#f4f5f2" font-family="Arial, sans-serif" font-size="29" font-weight="700">AI can suggest. It cannot authorize the action.</text>
+<g font-family="Arial, sans-serif">
+  <rect x="55" y="150" width="350" height="300" rx="24" fill="#0f1517" stroke="#3c4b4f"/>
+  <text x="84" y="190" fill="#b9f36b" font-size="13" font-family="monospace" letter-spacing="2">PROBABILISTIC LAYER</text>
+  <text x="84" y="232" fill="#f4f5f2" font-size="24" font-weight="700">AI interpretation</text>
+  <g fill="#8f9ca1" font-size="14">
+    <text x="84" y="272">• understand the user's story</text><text x="84" y="302">• extract facts from documents</text><text x="84" y="332">• interpret provider responses</text><text x="84" y="362">• identify missing information</text><text x="84" y="392">• draft the next recovery route</text>
+  </g>
+  <rect x="465" y="150" width="270" height="300" rx="24" fill="#111a12" stroke="#b9f36b" stroke-width="2"/>
+  <text x="496" y="190" fill="#b9f36b" font-size="13" font-family="monospace" letter-spacing="2">HARD GATE</text>
+  <text x="496" y="232" fill="#f4f5f2" font-size="24" font-weight="700">Policy decides</text>
+  <g fill="#aeb9b5" font-size="14"><text x="496" y="272">Identity ✓</text><text x="496" y="302">Evidence ✓</text><text x="496" y="332">Transaction ✓</text><text x="496" y="362">Destination ✓</text><text x="496" y="392">Authorization ✓</text></g>
+  <rect x="795" y="150" width="350" height="300" rx="24" fill="#0f1517" stroke="#3c4b4f"/>
+  <text x="825" y="190" fill="#b9f36b" font-size="13" font-family="monospace" letter-spacing="2">CONSEQUENTIAL LAYER</text>
+  <text x="825" y="232" fill="#f4f5f2" font-size="24" font-weight="700">External action</text>
+  <text x="825" y="274" fill="#8f9ca1" font-size="14">Exact destination + message + evidence</text>
+  <text x="825" y="306" fill="#8f9ca1" font-size="14">shown before execution</text>
+  <rect x="825" y="345" width="248" height="52" rx="14" fill="#b9f36b"/><text x="949" y="377" text-anchor="middle" fill="#091008" font-size="16" font-weight="700">ACCEPT &amp; SEND NOW</text>
+  <path d="M405 300 H465" stroke="#65727a" stroke-width="3"/><path d="M735 300 H795" stroke="#b9f36b" stroke-width="3"/>
+  <circle r="7" fill="#b9f36b" filter="url(#g)"><animateMotion dur="3.4s" repeatCount="indefinite" path="M0 0 H60 M390 0 H450"/></circle>
+</g>
+<text x="48" y="510" fill="#778488" font-family="monospace" font-size="12">Core code: lib/recoverit-ai.js → lib/case-brain.js → lib/case-workflow.js → api/cases/dispute-send.js</text>
+</svg>
