@@ -7,7 +7,8 @@ export const access='scheduler';
 export const methods=['POST'];
 export const schedule='0 * * * *';
 
-const BATCH=20;
+const BATCH=10;
+const MAX_QUEUED_PER_RUN=4;
 
 async function sendCaseUpdate(row){
   if(!row.email || !row.updated_at)return;
@@ -65,8 +66,8 @@ export default async function(req,res){
     if(row.status==='WAITING_FOR_USER') await sendAttentionEmail(row);
     if(row.identity_status!=='VERIFIED_ACCOUNT') continue;
     if(row.status==='WAITING_FOR_USER' && !String(row.transaction_reference||'').trim()) continue;
-    if(row.status==='REPORTED' || !row.ai_last_run_at || Date.now()-new Date(row.ai_last_run_at).getTime()>55*60*1000){
-      await scheduler.now('/api/cases/investigate-worker',{case_id:row.id,user_id:row.user_id});
+    if(queued<MAX_QUEUED_PER_RUN && (row.status==='REPORTED' || !row.ai_last_run_at || Date.now()-new Date(row.ai_last_run_at).getTime()>55*60*1000)){
+      await scheduler.now('/api/cases/investigate-worker',{case_id:row.id,user_id:row.user_id,interactive:false});
       queued++;
     }
   }

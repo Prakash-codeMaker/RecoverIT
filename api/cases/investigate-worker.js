@@ -24,8 +24,9 @@ function extractJson(text){
 async function setStep(id,key,status,detail){
   await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=$3 WHERE case_id=$4 AND step_key=$5',[status,detail,status==='DONE'?new Date().toISOString():null,id,key]);
 }
-async function scheduleNext(caseId,userId){
-  await scheduler.at(new Date(Date.now()+1200).toISOString(),'/api/cases/investigate-worker',{payload:{case_id:caseId,user_id:userId}});
+async function scheduleNext(caseId,userId,interactive=false){
+  if(!interactive)return;
+  await scheduler.at(new Date(Date.now()+1200).toISOString(),'/api/cases/investigate-worker',{payload:{case_id:caseId,user_id:userId,interactive:true}});
 }
 async function notify(userId,caseId,title,description){
   const recent=await db.query('SELECT id FROM notifications WHERE user_id=$1 AND case_id=$2 AND title=$3 AND created_at>now()-interval \'6 hours\' LIMIT 1',[userId,caseId,title]);
@@ -207,7 +208,7 @@ export default async function(req,res){
 
   const next=key==='payment' ? STEPS.length : STEPS.findIndex(s=>s[0]===key)+1;
   if(next<STEPS.length){
-    await scheduleNext(c.id,c.user_id);
+    await scheduleNext(c.id,c.user_id,Boolean(req.body?.interactive));
   }else{
     // Once the evidence-aware investigation reaches the recovery-plan stage, prepare the dispute route automatically.
     // The dispute-plan endpoint is idempotent and will reuse an existing active attempt instead of creating duplicates.

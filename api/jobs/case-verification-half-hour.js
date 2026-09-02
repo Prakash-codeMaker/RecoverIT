@@ -4,8 +4,8 @@ export const access='scheduler';
 export const methods=['POST'];
 export const schedule='30 * * * *';
 
-const BATCH_SIZE=100;
-const CONCURRENCY=2;
+const BATCH_SIZE=8;
+const CONCURRENCY=4;
 
 export default async function(req,res){
  const cases=(await db.query(`SELECT c.id,c.user_id

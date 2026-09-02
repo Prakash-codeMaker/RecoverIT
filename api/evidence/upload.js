@@ -152,7 +152,7 @@ export default async function(req,res){
     }
   }
 
-  await scheduler.now('/api/cases/investigate-worker',{case_id:caseId,user_id:req.user.id});
+  await scheduler.now('/api/cases/investigate-worker',{case_id:caseId,user_id:req.user.id,interactive:true});
   try{await scheduler.now('/api/jobs/case-verification',{case_id:caseId,user_id:req.user.id})}catch(_){/* continuous verification also runs hourly */}
 
   res.status(201).json({url,key,sha256:hex,verification,investigation_started:true,followup_ready:followup?{attempt_id:followup.attempt_id,organization:followup.organization}:null});

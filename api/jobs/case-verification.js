@@ -4,7 +4,7 @@ export const access='scheduler';
 export const methods=['POST'];
 export const schedule='0 * * * *';
 
-const BATCH_SIZE=20;
+const BATCH_SIZE=8;
 const CONCURRENCY=4;
 
 async function loadCandidates(priorityId){
