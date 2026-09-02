@@ -1,9 +1,7 @@
-# RecoverIT AI safety
+# AI safety boundary
 
-RecoverIT uses AI for interpretation, not as the authority for financial state.
+AI is used for interpretation: story understanding, evidence/document interpretation, structured fact extraction, missing-information detection, and provider-response classification.
 
-AI can interpret stories, documents and provider responses, extract structured facts, identify uncertainty, and prepare a recovery recommendation.
+Deterministic controls own authorization, case ownership, payment facts, evidence gates, workflow state, destination selection, explicit user approval, idempotency, retries, monitoring, and resolution confirmation.
 
-Deterministic controls decide whether a case can advance based on identity, evidence verification, transaction facts, case state, destination, authorization, idempotency and resolution rules.
-
-**AI can recommend. RecoverIT's control layer decides.**
+**AI can recommend. Deterministic controls decide.**

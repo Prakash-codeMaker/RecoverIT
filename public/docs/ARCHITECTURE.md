@@ -1,43 +1,38 @@
 # RecoverIT architecture
 
-RecoverIT separates probabilistic AI interpretation from deterministic case control.
+RecoverIT is a persistent recovery orchestration layer for payment problems.
 
 ```text
-Customer / payment context
-          ↓
-       RecoverIT UI
-          ↓
-        Case APIs
-          ↓
-┌────────────────────────────┐
-│ Persistent case workflow   │
-│ evidence · investigation   │
-│ recovery route · outcome   │
-└────────────┬───────────────┘
-             ↓
-        PostgreSQL state
-          ↙       ↘
-   AI reasoning   Background jobs
-        ↓              ↓
- interpretation    monitoring / retry
-        ↓
- deterministic safety gates
-        ↓
- approved external action
+Customer story / evidence
+          |
+          v
+   AI interpretation
+          |
+          v
+ Persistent case + workflow ledger
+          |
+   +------+------+------+
+   |             |      |
+Evidence      Payment  Provider
+verification  context  intelligence
+   |             |      |
+   +------+------+------+
+          |
+          v
+ Deterministic recovery policy
+          |
+          v
+ User-approved external action
+          |
+          v
+ Response / refund monitoring
+          |
+          v
+        Resolution
 ```
 
-### Product-to-code
+AI handles interpretation and preparation. Deterministic application code owns authorization, ownership, payment facts, evidence gates, state transitions, approval, idempotency, retries, monitoring, and resolution confirmation.
 
-| Product capability | Code / state |
-|---|---|
-| Persistent workflow | `lib/case-workflow.js` + `recovery_cases.workflow_*` |
-| Evidence verification | `lib/case-verification.js` |
-| AI interpretation | `lib/recoverit-ai.js` + `lib/case-brain.js` |
-| Recovery routing | `lib/dispute.js` + `api/cases/dispute-*` |
-| Resolution | `lib/resolution.js` |
-| Background continuation | `api/jobs/workflow-heartbeat.js` |
-| Provider integration | `api/integrations/*` |
+`lib/case-workflow.js` is the central workflow engine. The case stores its current step, next action, status, reason, trigger, and last reconciliation time so background jobs can resume the same case after the browser closes.
 
-### Why this scales
-
-The unit of scale is the **case workflow**, not a chat session. Provider adapters, batched workers, idempotent actions, monitoring and outcome signals can expand around the same case contract as coverage grows.
+The architecture can scale with batched workers, provider-specific queues, event-driven monitoring, horizontally scaled integrations, and a growing provider playbook layer without changing the customer-facing recovery journey.

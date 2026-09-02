@@ -1,31 +1,7 @@
 # RecoverIT product
 
-RecoverIT is a payment-recovery product that turns a messy payment problem into a persistent, evidence-backed case.
+RecoverIT is a payment-recovery product: a customer reports a problem once, then the system keeps the case moving through evidence, verification, investigation, recovery action, monitoring, and resolution.
 
-## Customer experience
+The public website is intentionally simple and product-first. The repository carries the technical depth required to understand how the system can become a scalable company.
 
-```text
-Tell us what happened
-        ↓
-Build the case
-        ↓
-Verify the evidence
-        ↓
-Investigate the payment trail
-        ↓
-Prepare the safest legitimate action
-        ↓
-Ask for approval
-        ↓
-Contact / guide the provider
-        ↓
-Monitor the response
-        ↓
-Confirm the outcome
-```
-
-The customer should never need to understand the internal orchestration. They should always know **what happened, what RecoverIT knows, what is uncertain, and what happens next**.
-
-## Product thesis
-
-The product starts with one case. The company grows by making the same recovery infrastructure reusable across more payment methods, providers, merchants and resolution pathways.
+**AI interprets the messy parts; deterministic controls protect money-related actions.**

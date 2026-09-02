@@ -1,19 +1,7 @@
 # RecoverIT scalability
 
-RecoverIT is designed to scale the **recovery workflow** independently from a browser session.
+RecoverIT uses a persistent case record with stateless API and workflow workers.
 
-```text
-more cases
-   ↓
-batched workflow workers
-   ↓
-provider adapters
-   ↓
-idempotent actions
-   ↓
-monitoring + retries
-   ↓
-outcome signals
-```
+As volume grows, the execution layer can be extended with batched workers, provider-specific queues, event-driven monitoring, stronger observability, and horizontally scaled integrations. The workflow ledger remains the durable source of progress so work can resume safely after retries or process restarts.
 
-The persistent case contract lets the same product expand across UPI, cards, bank payments, gateways and merchant workflows. The long-term company layer is the recovery infrastructure around those cases: provider coverage, playbooks, monitoring, integrations and outcome intelligence.
+More cases should create more independent work units, not more complexity in the customer-facing product.

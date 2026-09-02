@@ -1,31 +1,9 @@
 # RecoverIT workflow
 
-RecoverIT is a persistent case workflow, not a conversational session.
+A RecoverIT case is a durable process, not a chat thread:
 
-```text
-Report
-  ↓
-Verify identity + evidence
-  ↓
-Investigate payment facts
-  ↓
-Prepare legitimate recovery route
-  ↓
-User approval
-  ↓
-External contact / guided submission
-  ↓
-Monitor response
-  ↓
-Process requested evidence or reply
-  ↓
-Track refund / outcome
-  ↓
-Resolve
-```
+`Report → Verify → Investigate → Prepare recovery → User approval → External action → Monitor → Resolve`
 
-At every stage the case stores the current step, next action, status and reason. A browser can close without losing the workflow position.
+The current workflow position and next action are persisted with the case. Background jobs can resume the same case after the browser is closed. When something is missing or uncertain, the system can stop and ask for a specific item rather than guess.
 
-## Important gate
-
-No consequential external recovery action is exposed until the required evidence is verified and the route is ready. AI can interpret evidence and prepare a recommendation; deterministic workflow rules decide whether the case is allowed to advance.
+The landing page shows the customer journey; this document explains the operating model.

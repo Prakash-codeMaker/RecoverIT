@@ -1,14 +1,5 @@
-# RecoverIT technical docs
+# RecoverIT technical documentation
 
-The homepage is intentionally **product-first**. Architecture stays in the repository documentation for judges and engineers.
+The public landing page is intentionally product-first. It explains the customer problem, the recovery experience, and how to start. Technical due diligence belongs here: architecture, workflow, AI safety, reliability, scalability, integrations, security, evaluation, and demo methodology.
 
-- [Product](./PRODUCT.md)
-- [Architecture](./ARCHITECTURE.md)
-- [Workflow](./WORKFLOW.md)
-- [AI Safety](./AI-SAFETY.md)
-- [Scalability](./SCALABILITY.md)
-- [Reliability](./RELIABILITY.md)
-- [Evaluation](./EVALUATION.md)
-- [Integrations](./INTEGRATIONS.md)
-- [Security](./SECURITY.md)
-- [Demo](./DEMO.md)
+Start with `ARCHITECTURE.md` and `WORKFLOW.md`.
