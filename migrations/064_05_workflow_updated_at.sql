@@ -1,0 +1,1 @@
+ALTER TABLE recovery_cases ADD COLUMN IF NOT EXISTS workflow_updated_at timestamptz NOT NULL DEFAULT now();

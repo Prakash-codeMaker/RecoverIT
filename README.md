@@ -6,7 +6,7 @@
 
 [![Status](https://img.shields.io/badge/status-active%20prototype-orange)](https://recoverit.hatchable.site)
 [![Built with](https://img.shields.io/badge/built%20with-Hatchable-black)](https://hatchable.ai)
-[![AI](https://img.shields.io/badge/AI-Gemini-blue)](https://ai.google.dev/)
+[![AI](https://img.shields.io/badge/AI-multimodal%20%2B%20provider%20failover-blue)](https://ai.google.dev/)
 
 **Live product:** https://recoverit.hatchable.site
 
@@ -231,7 +231,9 @@ RecoverIT is currently implemented as a full-stack web application on Hatchable.
                        ┌────────▼─────────┐
                        │ PostgreSQL / DB  │
                        │ Cases / Events   │
-                       │ Evidence / Data │
+                       │ Evidence / Data  │
+                       │ Workflow position│
+                       │ + next action    │
                        └────────┬─────────┘
                                 │
                  ┌──────────────┴──────────────┐
@@ -258,9 +260,13 @@ The current project includes API areas for:
 - provider intelligence;
 - feedback and outcome signals;
 - P1/P2 case tooling;
-- resolution state;
-- Razorpay webhook handling;
-- scheduled case and payment monitoring.
+- resolution state and durable workflow position;
+- evidence verification and AI-provider failover;
+- dispute planning, approval, response handling, and escalation;
+- Razorpay transaction/refund and webhook handling;
+- Google Drive evidence import;
+- scheduled case, verification, payment, dispute, and workflow monitoring;
+- end-to-end recovery test scenarios.
 
 ### Data model
 
@@ -355,7 +361,7 @@ Before making this repository public, review the repository contents and Git his
 
 RecoverIT uses Hatchable configuration and managed services.
 
-The current production configuration includes authentication, Google/Gemini AI, scheduled case monitoring, and an optional Razorpay webhook secret.
+The current production configuration includes passwordless authentication, Google-backed AI with provider failover, evidence verification, scheduled case/workflow monitoring, Razorpay transaction/refund hooks, Twilio messaging configuration, and optional Google Drive / Account Aggregator integration settings.
 
 Secrets are configured through the deployment environment rather than hard-coded into application source.
 
@@ -367,7 +373,9 @@ enabled = true
 
 [ai]
 required = true
-providers = ["google"]
+
+# Runtime/provider settings and secrets are configured in Hatchable; do not
+# copy real credentials into this repository.
 
 [[secret]]
 key = "GOOGLE_API_KEY"
@@ -421,10 +429,20 @@ If you are developing this project outside Hatchable, you will need to provide e
 │
 ├── lib/
 │   ├── case.js
+│   ├── case-brain.js
+│   ├── case-verification.js
+│   ├── case-workflow.js
+│   ├── dispute.js
+│   ├── dispute-automation.js
+│   ├── integrations.js
+│   ├── recoverit-ai.js
 │   └── resolution.js
 │
 ├── migrations/
-│   └── 001_core.sql ... 036_resolution_engine.sql
+│   ├── 001_core.sql ... 062_google_drive_case_return.sql
+│   ├── 063_*_workflow_*.sql
+│   ├── 064_*_workflow_*.sql
+│   └── 065_workflow_index.sql
 │
 ├── public/
 │   ├── index.html
@@ -442,6 +460,33 @@ If you are developing this project outside Hatchable, you will need to provide e
 │
 └── hatchable.toml
 ```
+
+---
+
+## Workflow durability
+
+RecoverIT persists the current position of every active case instead of deriving the UI state from the latest browser session. The workflow ledger records:
+
+- the current workflow step;
+- the exact next action;
+- whether the case is active, waiting for the user, waiting for automation, or done;
+- the reason for the current state;
+- the trigger that last advanced the workflow;
+- when that workflow position was last reconciled.
+
+A central workflow engine reconciles this state after case creation, evidence verification, investigation progress, provider responses, outbound contact, and on a recurring heartbeat. Opening a case therefore resumes from its persisted position rather than restarting the process.
+
+This is a core reliability property of the product: **the case state is durable; the AI is not the source of truth.**
+
+---
+
+## Evaluation and testability
+
+The repository includes test-mode endpoints for deterministic end-to-end recovery scenarios, duplicate-action protection, external-response loops, AI-provider probing, and integration checks. The main E2E harness is designed to verify the complete chain rather than only individual functions.
+
+The latest recorded full E2E run before the workflow-ledger changes passed **21/21 checks**. Test fixtures use synthetic data and `*.invalid` destinations; no real customer evidence or production payment credentials belong in the repository.
+
+For the Razorpay buildathon, the important outcome metrics are intended to be measured from a reproducible evaluation set rather than estimated from product activity: recovery-route accuracy, evidence-verification accuracy, successful recovery rate, amount recovered, and abstention/exception rate.
 
 ---
 

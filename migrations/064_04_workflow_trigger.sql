@@ -1,0 +1,1 @@
+ALTER TABLE recovery_cases ADD COLUMN IF NOT EXISTS workflow_last_trigger text;

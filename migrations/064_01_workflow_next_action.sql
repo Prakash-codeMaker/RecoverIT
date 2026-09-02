@@ -1,0 +1,1 @@
+ALTER TABLE recovery_cases ADD COLUMN IF NOT EXISTS workflow_next_action text NOT NULL DEFAULT 'START_CASE';

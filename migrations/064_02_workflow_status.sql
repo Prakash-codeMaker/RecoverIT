@@ -1,0 +1,1 @@
+ALTER TABLE recovery_cases ADD COLUMN IF NOT EXISTS workflow_status text NOT NULL DEFAULT 'ACTIVE';

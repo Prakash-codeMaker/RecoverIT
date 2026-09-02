@@ -1,0 +1,1 @@
+ALTER TABLE recovery_cases ADD COLUMN IF NOT EXISTS workflow_reason text NOT NULL DEFAULT 'RecoverIT is establishing the current case position.';
