@@ -68,8 +68,10 @@ export default async function(req,res){
     }
   }catch(_){/* stored evidence remains untrusted until a successful verification */}
 
-  const aiStatus=verification.status==='VERIFIED'?'EVIDENCE_VERIFIED':verification.status==='REJECT'?'EVIDENCE_REJECTED':'EVIDENCE_REVIEW';
-  await db.query('UPDATE recovery_cases SET status=$1,ai_status=$2,updated_at=now() WHERE id=$3',['INVESTIGATING',aiStatus,caseId]);
+  const verificationResult=String(verification.status||verification.verdict||'REVIEW').toUpperCase();
+  const normalizedVerification=verificationResult==='REJECT'?'REJECTED':verificationResult;
+  const aiStatus=normalizedVerification==='VERIFIED'?'EVIDENCE_VERIFIED':normalizedVerification==='REJECTED'?'EVIDENCE_REJECTED':'EVIDENCE_REVIEW';
+  await db.query('UPDATE recovery_cases SET status=$1,ai_status=$2,verification_state=$3,verification_confidence=$4,verification_last_checked_at=now(),verification_last_available_at=CASE WHEN $4 IS NOT NULL THEN now() ELSE verification_last_available_at END,verification_reason=$5,updated_at=now() WHERE id=$6',['INVESTIGATING',aiStatus,normalizedVerification,Number.isFinite(Number(verification.parsed?.confidence))?Number(verification.parsed.confidence):null,String(verification.summary||verification.reason||'New payment proof was attached and checked.'),caseId]);
   await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['DONE','Your new proof is attached. The original payment facts remain captured.',caseId,'payment']);
   await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['RUNNING','New proof received. Comparing it with the existing case timeline.',caseId,'timeline']);
   await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['QUEUED','Waiting for the provider check.',caseId,'provider']);
