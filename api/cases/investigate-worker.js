@@ -121,7 +121,17 @@ export default async function(req,res){
     return res.json({ok:true,status:'WAITING_FOR_USER',reason:'REFERENCE_REQUIRED'});
   }
   const evidence=(await db.query('SELECT filename,content_type,bytes,sha256 FROM evidence WHERE case_id=$1 ORDER BY created_at ASC',[c.id])).rows;
+  const evidenceAnalysis=(await db.query('SELECT evidence_id,status,structured_data,confidence FROM evidence_analysis WHERE case_id=$1 AND analysis_type=$2 ORDER BY created_at ASC',[c.id,'document_understanding'])).rows;
+  const rejectedEvidence=evidenceAnalysis.filter(x=>String(x.structured_data?.verdict||'').toUpperCase()==='REJECT');
+  const verifiedEvidence=evidenceAnalysis.filter(x=>String(x.structured_data?.verdict||'').toUpperCase()==='VERIFIED');
   const reference=String(c.transaction_reference||'').trim();
+  if(evidence.length && rejectedEvidence.length===evidence.length){
+    const message='The uploaded proof could not be matched to the reported payment. RecoverIT has paused the investigation instead of treating the proof as valid.';
+    await db.query('UPDATE recovery_cases SET status=$1,ai_status=$2,ai_summary=$3,updated_at=now() WHERE id=$4',['WAITING_FOR_USER','EVIDENCE_REJECTED',message,c.id]);
+    await addEvent(c.id,'Proof needs replacement',message,'WAITING_FOR_USER','RecoverIT');
+    await notify(c.user_id,c.id,'Proof could not be verified','Upload a clearer or relevant payment receipt, bank statement, UPI screen, merchant message, or refund message.');
+    return res.json({ok:true,status:'WAITING_FOR_USER',reason:'EVIDENCE_REJECTED'});
+  }
   if(key==='payment' && !reference && evidence.length===0){
     const message='We captured your story, but we cannot verify the payment request yet. Upload a screenshot, receipt, invoice, provider message, or provide the UTR/RRN/transaction reference. RecoverIT will continue automatically once we have a verifiable signal.';
     await db.query('UPDATE recovery_cases SET status=$1,ai_status=$2,ai_summary=$3,ai_findings=$4::jsonb,ai_next_steps=$5::jsonb,ai_confidence=NULL,confidence_score=NULL,updated_at=now() WHERE id=$6',['WAITING_FOR_USER','NEEDS_EVIDENCE',message,JSON.stringify([{text:'The reported payment request has not been independently verified.',status:'reported'},{text:'No proof or transaction reference is available yet.',status:'unknown'}]),JSON.stringify(['Upload proof of the payment request.','Provide the UTR/RRN/transaction reference or provider response if available.']),c.id]);
