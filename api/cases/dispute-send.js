@@ -5,6 +5,9 @@ export const access='user'; export const methods=['POST'];
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 export default async function(req,res){
  const c=await getCase(req.body?.case_id,req.user.id);if(!c)return res.status(404).json({error:'Case not found.'});
+ const evidenceCheck=await db.query("SELECT COUNT(*)::int AS total,COUNT(*) FILTER (WHERE ea.status='COMPLETED' AND COALESCE(ea.structured_data->>'verdict','')='VERIFIED' AND ea.confidence IS NOT NULL AND ea.confidence>=60)::int AS verified FROM evidence e LEFT JOIN evidence_analysis ea ON ea.evidence_id=e.id AND ea.analysis_type='document_understanding' WHERE e.case_id=$1",[c.id]);
+ const ev=evidenceCheck.rows[0]||{total:0,verified:0};
+ if(String(c.verification_state||'').toUpperCase()!=='VERIFIED'||Number(ev.total)!==Number(ev.verified)||Number(ev.total)===0)return res.status(409).json({error:'External contact is blocked until every attached document is positively verified.',code:'ALL_EVIDENCE_VERIFICATION_REQUIRED',next_action:'RecoverIT will verify the attached documents first. Replace any incorrect proof before approving contact.'});
  const id=String(req.body?.attempt_id||'').trim();const approval=String(req.body?.approval_token||'').trim();if(approval!=='USER_APPROVED')return res.status(409).json({error:'RecoverIT needs your explicit approval before contacting an external organization.'});
  const a=(await db.query('SELECT * FROM dispute_attempts WHERE id=$1 AND case_id=$2 AND user_id=$3',[id,c.id,req.user.id])).rows[0];if(!a)return res.status(404).json({error:'Dispute attempt not found.'});
  if(a.status==='SENT'||a.status==='RESOLVED')return res.json({ok:true,status:a.status,idempotent:true,organization:a.organization,external_reference:a.external_reference||null});

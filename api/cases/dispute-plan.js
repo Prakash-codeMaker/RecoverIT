@@ -7,8 +7,9 @@ export default async function(req,res){
  const c=await getCase(req.body?.case_id,req.user.id);if(!c)return res.status(404).json({error:'Case not found.'});
  const evidence=(await db.query('SELECT id,filename,content_type,bytes,sha256 FROM evidence WHERE case_id=$1 ORDER BY created_at',[c.id])).rows;
  if(!evidence.length)return res.status(409).json({error:'Related proof is compulsory before RecoverIT can prepare a dispute.'});
- const verifiedEvidence=await db.query("SELECT id FROM evidence_analysis WHERE case_id=$1 AND analysis_type='document_understanding' AND status='COMPLETED' AND confidence IS NOT NULL AND confidence>=60 AND COALESCE(structured_data->>'verdict','')='VERIFIED' LIMIT 1",[c.id]);
- if(!verifiedEvidence.rows[0])return res.status(409).json({error:'RecoverIT must verify at least one relevant payment proof before showing or preparing an external contact.'});
+ const evidenceVerification=await db.query("SELECT e.id,COALESCE(ea.status,'PENDING') AS analysis_status,COALESCE(ea.structured_data->>'verdict','') AS verdict,ea.confidence FROM evidence e LEFT JOIN evidence_analysis ea ON ea.evidence_id=e.id AND ea.analysis_type='document_understanding' WHERE e.case_id=$1 ORDER BY e.created_at ASC",[c.id]);
+ const allEvidenceVerified=evidenceVerification.rows.length>0 && evidenceVerification.rows.every(x=>x.analysis_status==='COMPLETED'&&x.verdict==='VERIFIED'&&x.confidence!=null&&Number(x.confidence)>=60);
+ if(!allEvidenceVerified)return res.status(409).json({error:'RecoverIT must positively verify every document attached to this case before it can prepare or show an external contact.',code:'ALL_EVIDENCE_VERIFICATION_REQUIRED',next_action:'RecoverIT will re-check the attached documents. If a document is incorrect or cannot be verified, replace it with the requested payment proof.'});
  const missingFacts=[];
  if(c.amount==null || Number(c.amount)<=0)missingFacts.push({key:'amount',label:'Payment amount'});
  if(!String(c.payment_method||'').trim() || String(c.payment_method).toLowerCase()==='unknown')missingFacts.push({key:'payment_method',label:'Payment method'});

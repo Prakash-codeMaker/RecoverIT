@@ -90,7 +90,8 @@ export default async function(req,res){
   const evidenceTrusted=normalizedVerification==='VERIFIED';
   const evidenceRejected=normalizedVerification==='REJECTED';
   const evidenceNeedsReview=normalizedVerification==='REVIEW';
-  const nextCaseStatus=evidenceRejected||evidenceNeedsReview?'WAITING_FOR_USER':'INVESTIGATING';
+  const verificationNeedsUser=normalizedVerification!=='VERIFIED';
+  const nextCaseStatus=verificationNeedsUser?'WAITING_FOR_USER':'INVESTIGATING';
   await db.query('UPDATE recovery_cases SET status=$1,ai_status=$2,verification_state=$3,verification_confidence=$4,verification_last_checked_at=now(),verification_last_available_at=CASE WHEN $4::numeric IS NOT NULL THEN now() ELSE verification_last_available_at END,verification_reason=$5,updated_at=now() WHERE id=$6',[nextCaseStatus,aiStatus,normalizedVerification,confidence,reason,caseId]);
   if(evidenceTrusted){
     await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['DONE','Your proof is verified. RecoverIT is advancing to the next payment/timeline check.',caseId,'payment']);

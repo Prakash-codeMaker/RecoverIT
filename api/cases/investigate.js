@@ -3,6 +3,11 @@ import { getCase, addEvent } from 'lib/case.js';
 export const access='user'; export const methods=['POST'];
 export default async function(req,res){
  const c=await getCase(req.body?.case_id,req.user.id); if(!c)return res.status(404).json({error:'Case not found.'});
+ const verification=String(c.verification_state||'UNVERIFIED').toUpperCase();
+ if(verification!=='VERIFIED'){
+   await scheduler.now('/api/jobs/case-verification',{case_id:c.id,user_id:req.user.id});
+   return res.status(202).json({ok:true,status:c.status||'WAITING_FOR_USER',message:'RecoverIT is verifying the attached evidence first. The same case will continue automatically after verification.'});
+ }
  await db.query('UPDATE recovery_cases SET status=$1,updated_at=now() WHERE id=$2',['INVESTIGATING',c.id]);
  await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['RUNNING','Reading your story and identifying the payment facts.',c.id,'payment']);
  await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['QUEUED','Waiting for the evidence review.',c.id,'timeline']);

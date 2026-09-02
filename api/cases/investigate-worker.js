@@ -1,6 +1,7 @@
 import { db, scheduler, email } from 'hatchable';
 import { generateJSON } from 'lib/recoverit-ai.js';
 import { getCase, addEvent } from 'lib/case.js';
+import { verifyCaseEvidence } from 'lib/case-verification.js';
 
 export const access='scheduler';
 export const methods=['POST'];
@@ -98,6 +99,35 @@ export default async function(req,res){
     await db.query('UPDATE recovery_cases SET identity_status=$1,identity_verified_at=now(),updated_at=now() WHERE id=$2',['VERIFIED_ACCOUNT',c.id]);
     await addEvent(c.id,'Identity verified','RecoverIT verified the signed-in account email before continuing the investigation.','INVESTIGATING','RecoverIT');
     await notify(c.user_id,c.id,'Identity verified','Your signed-in account is verified. RecoverIT is continuing the investigation.');
+  }
+
+  // Hard gate: every case uses the same evidence-first workflow. Legacy cases and
+  // newly uploaded documents cannot reach timeline/provider/recovery stages until
+  // all attached evidence has a positive verification verdict.
+  const verificationState=String(c.verification_state||'UNVERIFIED').toUpperCase();
+  if(verificationState!=='VERIFIED'){
+    const hasEvidence=(await db.query('SELECT id FROM evidence WHERE case_id=$1 LIMIT 1',[c.id])).rows.length>0;
+    if(hasEvidence){
+      const verification=await verifyCaseEvidence(c.id,c.user_id,'investigation_gate');
+      const result=String(verification?.result||'UNVERIFIED').toUpperCase();
+      if(result==='REJECTED'||result==='REVIEW'){
+        const message=result==='REJECTED'
+          ? 'The attached payment proof could not be matched to this case. RecoverIT has paused the investigation and needs a correct document.'
+          : 'The attached payment proof is relevant but could not be fully verified. RecoverIT has paused the investigation until the evidence is sufficiently supported.';
+        await db.query('UPDATE recovery_cases SET status=$1,ai_status=$2,verification_state=$3,verification_reason=$4,updated_at=now() WHERE id=$5',['WAITING_FOR_USER',result==='REJECTED'?'EVIDENCE_REJECTED':'EVIDENCE_REVIEW',result,message,c.id]);
+        await addEvent(c.id,result==='REJECTED'?'Correct proof required':'Proof verification required',message,'WAITING_FOR_USER','RecoverIT');
+        await notify(c.user_id,c.id,result==='REJECTED'?'The proof is not correct for this case':'RecoverIT needs better-supported proof',result==='REJECTED'?'Upload the correct payment receipt, bank statement, transaction screen, or provider message for this payment.':'Upload another relevant payment document or retry verification.');
+        return res.json({ok:true,status:'WAITING_FOR_USER',reason:result==='REJECTED'?'EVIDENCE_REJECTED':'EVIDENCE_REVIEW'});
+      }
+      if(result!=='VERIFIED'){
+        await db.query('UPDATE recovery_cases SET status=$1,verification_state=$2,verification_reason=$3,updated_at=now() WHERE id=$4',['INVESTIGATING','UNVERIFIED',verification?.reason||'Automated evidence verification is unavailable. RecoverIT will retry automatically.',c.id]);
+        return res.json({ok:true,status:'INVESTIGATING',reason:'EVIDENCE_VERIFICATION_RETRY'});
+      }
+    }else{
+      await db.query('UPDATE recovery_cases SET status=$1,verification_state=$2,verification_reason=$3,updated_at=now() WHERE id=$4',['WAITING_FOR_USER','UNVERIFIED','No supporting evidence is attached yet.',c.id]);
+      await notify(c.user_id,c.id,'Proof needed to continue','Upload the payment document RecoverIT requests. The document will be verified before the case advances.');
+      return res.json({ok:true,status:'WAITING_FOR_USER',reason:'NO_EVIDENCE'});
+    }
   }
 
   const steps=await db.query('SELECT step_key,status,detail FROM investigation_steps WHERE case_id=$1 ORDER BY created_at ASC',[c.id]);
