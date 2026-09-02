@@ -143,12 +143,6 @@ function requestedEvidenceForCase(c,hasProof,verificationState){
   }
   return [];
 }
-  if(t.includes('duplicate')||desc.includes('duplicate'))return ['Both payment receipts or transaction confirmations','Bank statement showing both debits','Transaction/UTR/RRN references for the two payments'];
-  if(t.includes('unrecognized')||t.includes('unauthorized')||desc.includes('not mine')||desc.includes('unknown'))return ['Bank statement or transaction record showing the disputed debit','Payment/app transaction details or screenshot','Any provider/merchant dispute or acknowledgement'];
-  if(t.includes('failed')||desc.includes('failed'))return ['Payment receipt or transaction confirmation','Bank/app screenshot showing the debit or failed status','UTR/RRN/transaction reference if available'];
-  if(t.includes('pending')||t.includes('stuck')||desc.includes('pending'))return ['Payment/app screenshot showing the pending status','Transaction receipt or bank debit proof','Provider response or ticket reference'];
-  return ['Payment receipt, transaction screenshot, or bank statement','UTR/RRN/transaction reference if available','Merchant or provider message confirming the payment status'];
-}
 async function verifyPayment(){
   const body=document.getElementById('verificationBody'),button=document.getElementById('verifyPayment');
   if(!body||!button)return;
