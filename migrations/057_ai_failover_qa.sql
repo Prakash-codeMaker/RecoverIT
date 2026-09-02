@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS ai_failover_test_runs (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), created_at timestamptz NOT NULL DEFAULT now(), mime_type text NOT NULL, ok boolean NOT NULL DEFAULT false, provider text, model text, verdict text, attempts jsonb NOT NULL DEFAULT '[]'::jsonb, error text);
