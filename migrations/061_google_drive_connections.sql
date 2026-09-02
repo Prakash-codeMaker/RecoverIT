@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS oauth_connections (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id text NOT NULL,provider text NOT NULL,access_token text NOT NULL,refresh_token text,expires_at timestamptz,scope text,created_at timestamptz NOT NULL DEFAULT now(),updated_at timestamptz NOT NULL DEFAULT now(),UNIQUE(user_id,provider))

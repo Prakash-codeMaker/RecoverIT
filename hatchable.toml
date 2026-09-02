@@ -55,6 +55,24 @@ expose = false
 description = "Razorpay webhook signing secret used to verify provider events."
 
 [[secret]]
+key = "GOOGLE_CLIENT_ID"
+required = false
+expose = true
+description = "Google OAuth client ID for Google Drive document import."
+
+[[secret]]
+key = "GOOGLE_CLIENT_SECRET"
+required = false
+expose = true
+description = "Google OAuth client secret for server-side Google Drive authorization-code exchange."
+
+[[secret]]
+key = "GOOGLE_REDIRECT_URI"
+required = false
+expose = true
+description = "Exact Google Drive OAuth callback URL for RecoverIT."
+
+[[secret]]
 key = "RAZORPAY_KEY_ID"
 required = false
 expose = true

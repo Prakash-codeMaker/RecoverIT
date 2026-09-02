@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS oauth_states (state text PRIMARY KEY,user_id text NOT NULL,provider text NOT NULL,redirect_uri text NOT NULL,expires_at timestamptz NOT NULL,created_at timestamptz NOT NULL DEFAULT now())
