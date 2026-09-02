@@ -1,5 +1,6 @@
 import { db, scheduler, email } from 'hatchable';
 import { syncResolutionState } from 'lib/resolution.js';
+import { prepareFirstDisputeAction } from 'lib/dispute.js';
 
 export const access='scheduler';
 export const methods=['POST'];
@@ -50,7 +51,14 @@ export default async function(req,res){
     ORDER BY c.updated_at ASC,c.id ASC LIMIT $3`,[cursorTime,cursorId,BATCH]);
   let queued=0;
   for(const row of active.rows){
-    try{await syncResolutionState(row.id)}catch(_){/* resolution state must never block case monitoring */}
+    let resolution=null;try{resolution=await syncResolutionState(row.id)}catch(_){/* resolution state must never block case monitoring */}
+    if(row.identity_status==='VERIFIED_ACCOUNT'){
+      try{
+        const vr=await db.query("SELECT * FROM recovery_cases WHERE id=$1 LIMIT 1",[row.id]);
+        const fullCase=vr.rows[0];
+        if(String(fullCase?.verification_state||'').toUpperCase()==='VERIFIED') await prepareFirstDisputeAction(fullCase,row.user_id);
+      }catch(_){/* automatic route preparation is best-effort and never blocks monitoring */}
+    }
     await sendCaseUpdate(row);
     if(row.status==='WAITING_FOR_USER') await sendAttentionEmail(row);
     if(row.identity_status!=='VERIFIED_ACCOUNT') continue;
