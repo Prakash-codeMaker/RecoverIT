@@ -1,0 +1,4 @@
+import { db } from 'hatchable';
+import { getCase } from 'lib/case.js';
+export const access='user'; export const methods=['GET'];
+export default async function(req,res){const c=await getCase(req.query?.case_id,req.user.id);if(!c)return res.status(404).json({error:'Case not found.'});const [r,s,a]=await Promise.all([db.query('SELECT * FROM dispute_requirements WHERE case_id=$1 ORDER BY created_at DESC',[c.id]),db.query('SELECT * FROM dispute_state WHERE case_id=$1',[c.id]),db.query('SELECT * FROM dispute_attempts WHERE case_id=$1 ORDER BY created_at DESC',[c.id])]);res.json({requirements:r.rows,state:s.rows[0]||null,attempts:a.rows});}

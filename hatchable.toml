@@ -161,3 +161,27 @@ write = "own"
 [db.tables.reconciliation_runs]
 read = "own"
 write = "own"
+
+[db.tables.case_preflights]
+read = "own"
+write = "own"
+
+[db.tables.dispute_attempts]
+read = "own"
+write = "own"
+
+[db.tables.dispute_requirements]
+read = "own"
+write = "own"
+
+[db.tables.dispute_responses]
+read = "own"
+write = "own"
+
+[db.tables.dispute_state]
+read = "own"
+write = "own"
+
+[db.tables.dispute_routes]
+read = "public"
+write = "public"

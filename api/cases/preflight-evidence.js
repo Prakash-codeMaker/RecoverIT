@@ -1,4 +1,6 @@
+import { db } from 'hatchable';
 import { googleVisionDocument, extractGeminiText } from 'lib/integrations.js';
+import { hashText } from 'lib/dispute.js';
 export const access='user'; export const methods=['POST'];
 
 function parseJson(text){const raw=String(text||'').trim().replace(/^```json\s*/i,'').replace(/```$/,'').trim();try{return JSON.parse(raw)}catch(_){const s=raw.indexOf('{'),e=raw.lastIndexOf('}');if(s>=0&&e>s){try{return JSON.parse(raw.slice(s,e+1))}catch(_2){}}return null}}
@@ -7,7 +9,7 @@ function clean(v,max=500){return String(v??'').replace(/[\u0000-\u001F]/g,' ').s
 export default async function(req,res){
  const description=String(req.body?.description||'').trim(); const files=req.files||[];
  if(!description)return res.status(400).json({error:'Describe what happened before verifying proof.'});
- if(!files.length)return res.json({ok:true,required:false,verdict:'NO_PROOF',message:'No proof was uploaded. The case can be created from the story alone.'});
+ if(!files.length)return res.status(400).json({ok:false,required:true,verdict:'NO_PROOF',message:'At least one related payment document is required before RecoverIT can create a dispute case.',next_action:'Upload a payment receipt, UPI/bank transaction proof, refund message, invoice, order record, or relevant merchant communication.'});
  if(files.length>8)return res.status(400).json({error:'Please verify up to 8 proof files at a time.'});
  const allowed=new Set(['image/jpeg','image/png','image/webp','application/pdf']);
  for(const f of files){if(!allowed.has(f.contentType))return res.status(415).json({error:`${f.filename} is not a supported proof type. Use JPG, PNG, WEBP or PDF.`});if(f.buffer.length>10*1024*1024)return res.status(413).json({error:`${f.filename} is larger than 10 MB.`})}
@@ -35,5 +37,7 @@ VERIFIED means the file is clearly relevant and materially supports the story wi
  const verdict=verdicts.includes('REJECT')?'REJECT':verdicts.includes('REVIEW')?'REVIEW':'VERIFIED';
  const summaries=results.map(x=>({filename:x.filename,verdict:x.verdict,relevance:x.relevance,summary:x.summary,extracted:x.extracted,matches:x.matches,contradictions:x.contradictions,missing_for_verification:x.missing_for_verification,authenticity_signals:x.authenticity_signals,confidence:x.confidence}));
  const message=verdict==='VERIFIED'?'The uploaded proof materially supports the payment story.':verdict==='REVIEW'?'The uploaded proof appears relevant, but some important facts still need manual review.':'The uploaded proof does not currently support the payment story strongly enough to create a verified case.';
- res.json({ok:true,required:true,verdict,message,files:summaries,verification:{verified:verdict==='VERIFIED',review_required:verdict==='REVIEW',rejected:verdict==='REJECT'},next_action:verdict==='REJECT'?'Upload a clearer or relevant payment proof and try again.':verdict==='REVIEW'?'You can create the case for manual evidence review, but RecoverIT will not treat the proof as verified.':'Create the case; RecoverIT will persist the evidence analysis and continue provider reconciliation.'});
+ const fileHashes=[];for(const f of files){const hash=await crypto.subtle.digest('SHA-256',f.buffer);fileHashes.push(Array.from(new Uint8Array(hash)).map(x=>x.toString(16).padStart(2,'0')).join(''))}
+ const pre=await db.query('INSERT INTO case_preflights (user_id,description_hash,verdict,result,file_hashes,expires_at) VALUES ($1,$2,$3,$4,$5,now()+interval \'15 minutes\') RETURNING id,expires_at',[req.user.id,hashText(description),verdict,JSON.stringify({message,files:summaries}),JSON.stringify(fileHashes)]);
+ res.json({ok:true,required:true,preflight_id:pre.rows[0].id,expires_at:pre.rows[0].expires_at,verdict,message,files:summaries,verification:{verified:verdict==='VERIFIED',review_required:verdict==='REVIEW',rejected:verdict==='REJECT'},next_action:verdict==='REJECT'?'Upload a clearer or relevant payment proof and try again.':verdict==='REVIEW'?'Review the evidence findings and explicitly approve creation for manual review.':'Create the case; RecoverIT will persist the evidence analysis and continue provider reconciliation.'});
 }
