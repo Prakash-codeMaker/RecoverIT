@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS ai_provider_health (provider text PRIMARY KEY, enabled boolean NOT NULL DEFAULT true, failure_count integer NOT NULL DEFAULT 0, success_count integer NOT NULL DEFAULT 0, cooldown_until timestamptz, last_error text, last_error_at timestamptz, last_success_at timestamptz, updated_at timestamptz NOT NULL DEFAULT now());
+INSERT INTO ai_provider_health (provider) SELECT 'gemini' WHERE NOT EXISTS (SELECT 1 FROM ai_provider_health WHERE provider='gemini');
+INSERT INTO ai_provider_health (provider) SELECT 'openai' WHERE NOT EXISTS (SELECT 1 FROM ai_provider_health WHERE provider='openai');
+INSERT INTO ai_provider_health (provider) SELECT 'anthropic' WHERE NOT EXISTS (SELECT 1 FROM ai_provider_health WHERE provider='anthropic');
+INSERT INTO ai_provider_health (provider) SELECT 'managed_sonnet' WHERE NOT EXISTS (SELECT 1 FROM ai_provider_health WHERE provider='managed_sonnet');

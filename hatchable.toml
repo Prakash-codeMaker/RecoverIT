@@ -4,13 +4,13 @@ providers = ["email", "google"]
 
 [ai]
 required = true
-providers = ["google"]
+providers = ["google", "openai", "anthropic"]
 
 [[secret]]
 key = "GOOGLE_API_KEY"
-required = true
-expose = true
-description = "Google Gemini API credential used by RecoverIT's AI investigation engine."
+required = false
+expose = false
+description = "Legacy Google credential retained for compatibility; active AI access is managed by the Hatchable AI capability."
 
 [project]
 name = "RecoverIT"
@@ -108,7 +108,43 @@ description = "Authorized Account Aggregator FIU client secret."
 key = "RECOVERIT_GEMINI_MODEL"
 required = false
 expose = true
-description = "Optional Gemini model override for document understanding." 
+description = "Optional Gemini model override for document understanding."
+
+[[secret]]
+key = "OPENAI_API_KEY"
+required = false
+expose = false
+description = "Optional OpenAI API key used as an independent AI failover provider."
+
+[[secret]]
+key = "ANTHROPIC_API_KEY"
+required = false
+expose = false
+description = "Optional Anthropic API key used as an independent AI failover provider."
+
+[[secret]]
+key = "RECOVERIT_OPENAI_MODEL"
+required = false
+expose = true
+description = "Optional OpenAI model override."
+
+[[secret]]
+key = "RECOVERIT_OPENAI_VISION_MODEL"
+required = false
+expose = true
+description = "Optional OpenAI vision model override."
+
+[[secret]]
+key = "RECOVERIT_ANTHROPIC_MODEL"
+required = false
+expose = true
+description = "Optional Anthropic model override."
+
+[[secret]]
+key = "RECOVERIT_ANTHROPIC_VISION_MODEL"
+required = false
+expose = true
+description = "Optional Anthropic vision model override." 
 
 [[cron]]
 path = "/api/outcomes/learn"

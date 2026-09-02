@@ -1,4 +1,5 @@
-import { db, ai } from 'hatchable';
+import { db } from 'hatchable';
+import { generateJSON } from 'lib/recoverit-ai.js';
 import { getCase } from 'lib/case.js';
 import { clean, prepareNextRoute } from 'lib/dispute.js';
 export const access='user'; export const methods=['POST'];
@@ -6,7 +7,7 @@ export default async function(req,res){
  const c=await getCase(req.body?.case_id,req.user.id);if(!c)return res.status(404).json({error:'Case not found.'});
  const raw=clean(req.body?.response||'',6000);if(raw.length<5)return res.status(400).json({error:'Paste the organization response, acknowledgement, or the next message you received.'});
  let attemptId=req.body?.attempt_id||null; if(!attemptId){const cur=await db.query('SELECT current_attempt_id FROM dispute_state WHERE case_id=$1 AND user_id=$2',[c.id,req.user.id]);attemptId=cur.rows[0]?.current_attempt_id||null;} let parsed={state:'RECEIVED',next_action:'Review the response and provide any requested document or information.',confidence:0};
- try{const out=await ai.generateText({model:'gemini-flash',purpose:'recoverit-dispute-response',prompt:`Classify this response to a payment dispute. Return JSON {state:"ACKNOWLEDGED|MORE_INFO_REQUIRED|RESOLVED|REJECTED|ESCALATED|UNCLASSIFIED",summary:"",requirements:[],next_action:"",due_hours:0,confidence:0}. Do not invent deadlines or outcomes. Response:${raw}`,maxTokens:700});const t=String(out.text||'').replace(/^```json\s*/i,'').replace(/```$/,'').trim();try{parsed=JSON.parse(t)}catch(_){}}
+ try{const out=await generateJSON({purpose:'recoverit-dispute-response',prompt:`Classify this response to a payment dispute. Return JSON {state:"ACKNOWLEDGED|MORE_INFO_REQUIRED|RESOLVED|REJECTED|ESCALATED|UNCLASSIFIED",summary:"",requirements:[],next_action:"",due_hours:0,confidence:0}. Do not invent deadlines or outcomes. Response:${raw}`,maxTokens:700});if(out.parsed)parsed=out.parsed;}
  catch(_){ }
  const rr=await db.query('INSERT INTO dispute_responses (case_id,user_id,attempt_id,source,channel,raw_text,structured_response,interpreted_state,next_action,confidence) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id',[c.id,req.user.id,attemptId,'USER_CAPTURED','PASTE',raw,parsed,String(parsed.state||'UNCLASSIFIED'),String(parsed.next_action||''),Number(parsed.confidence)||0]);
  const reqs=Array.isArray(parsed.requirements)?parsed.requirements.slice(0,8):[];for(const item of reqs)await db.query('INSERT INTO dispute_requirements (case_id,user_id,attempt_id,requirement,reason) VALUES ($1,$2,$3,$4,$5)',[c.id,req.user.id,attemptId,String(item),String(parsed.summary||'')]);

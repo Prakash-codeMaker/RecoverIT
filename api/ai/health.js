@@ -1,0 +1,3 @@
+import { db } from 'hatchable';
+export const access='admin'; export const methods=['GET'];
+export default async function(req,res){const r=await db.query('SELECT provider,enabled,failure_count,success_count,cooldown_until,last_error,last_error_at,last_success_at,updated_at FROM ai_provider_health ORDER BY provider');res.json({providers:r.rows,mode:'provider-failover',models:{gemini:'gemini-3.7-flash',openai:'gpt-5.6-luna',anthropic:'sonnet'},note:'Provider credentials are managed by Hatchable AI setup and are never returned by this endpoint.'});}

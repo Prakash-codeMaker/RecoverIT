@@ -1,4 +1,5 @@
-import { db, ai, scheduler, email } from 'hatchable';
+import { db, scheduler, email } from 'hatchable';
+import { generateJSON } from 'lib/recoverit-ai.js';
 import { getCase, addEvent } from 'lib/case.js';
 
 export const access='scheduler';
@@ -57,15 +58,15 @@ async function aiInvestigate(c,step,evidence,provider,previous){
 
 CASE DATA:\n${JSON.stringify(facts)}\n\nReturn ONLY compact valid JSON, no markdown:\n{"summary":"<=200 chars","findings":[{"text":"<=160 chars","status":"verified|reported|conflict|unknown"}],"next_steps":["<=160 chars"],"confidence":0,"needs_user":false,"user_request":"<=200 chars"}`;
   try{
-    const out=await ai.generateText({model:'gemini-flash',prompt,purpose:'payment-investigation',userId:c.user_id,maxTokens:1000});
-    let parsed=extractJson(out.text);
+    const out=await generateJSON({prompt,purpose:'payment-investigation',userId:c.user_id,maxTokens:1000});
+    let parsed=out.parsed;
     if(!parsed){
       const retryPrompt=`Analyze this RecoverIT case quickly and return ONLY valid JSON. Never invent facts. If information is missing, ask only for the smallest useful detail.\nCase: ${JSON.stringify({issue_type:c.issue_type,description:cleanText(c.description,1800),amount:c.amount,currency:c.currency,merchant:c.merchant_name||null,transaction_reference:c.transaction_reference||null,payment_method:c.payment_method||null,evidence_count:evidence.length,provider_events:provider.length})}\nJSON: {"summary":"short","findings":[{"text":"short","status":"verified|reported|conflict|unknown"}],"next_steps":["short"],"confidence":0,"needs_user":false,"user_request":"short"}`;
-      const retry=await ai.generateText({model:'gemini-flash',prompt:retryPrompt,purpose:'payment-investigation-retry',userId:c.user_id,maxTokens:600});
-      parsed=extractJson(retry.text);
+      const retry=await generateJSON({prompt:retryPrompt,purpose:'payment-investigation-retry',userId:c.user_id,maxTokens:600});
+      parsed=retry.parsed;
     }
     if(!parsed)throw new Error('AI returned invalid investigation JSON.');
-    return parsed;
+    return {...parsed,ai_provider:out.provider||null};
   }catch(error){
     const hasReference=Boolean(String(c.transaction_reference||'').trim());
     const hasEvidence=evidence.length>0;

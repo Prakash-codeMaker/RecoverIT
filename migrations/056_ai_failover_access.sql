@@ -1,0 +1,2 @@
+CREATE TABLE IF NOT EXISTS ai_request_log (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), purpose text NOT NULL, provider text, success boolean NOT NULL DEFAULT false, failover_from jsonb NOT NULL DEFAULT '[]'::jsonb, error_summary text, created_at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX IF NOT EXISTS ai_request_log_created_idx ON ai_request_log(created_at DESC);
