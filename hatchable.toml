@@ -40,6 +40,10 @@ write = "own"
 read = "own"
 write = "own"
 
+[db.tables.case_brain]
+read = "own"
+write = "own"
+
 [[cron]]
 path = "/api/jobs/case-monitor"
 schedule = "0 * * * *"

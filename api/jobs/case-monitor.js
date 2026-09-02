@@ -1,6 +1,7 @@
 import { db, scheduler, email } from 'hatchable';
 import { syncResolutionState } from 'lib/resolution.js';
 import { prepareFirstDisputeAction } from 'lib/dispute.js';
+import { rebuildCaseBrain } from 'lib/case-brain.js';
 
 export const access='scheduler';
 export const methods=['POST'];
@@ -52,6 +53,7 @@ export default async function(req,res){
   let queued=0;
   for(const row of active.rows){
     let resolution=null;try{resolution=await syncResolutionState(row.id)}catch(_){/* resolution state must never block case monitoring */}
+    try{await rebuildCaseBrain(row.id,row.user_id)}catch(_){/* Case Brain refresh is best-effort and never blocks monitoring */}
     if(row.identity_status==='VERIFIED_ACCOUNT'){
       try{
         const vr=await db.query("SELECT * FROM recovery_cases WHERE id=$1 LIMIT 1",[row.id]);
