@@ -110,8 +110,9 @@ export default async function(req,res){
  }catch(e){
   add(result,'runtime_exception',false,String(e.message||e));
  }finally{
-  try{await cleanup(caseId,key);await storage.del(`qa-e2e/${runId}-statement.txt`)}catch(_){}
+  try{await cleanup(caseId,key);await storage.del(`qa-e2e/${runId}-statement.txt`)}catch(_){result.cleanup_error='qa fixture cleanup encountered an error';}
   result.cleanup=true;
+  try{await db.query('INSERT INTO e2e_test_runs (run_id,scenario,ok,checks,error) VALUES ($1,$2,$3,$4,$5)',[runId,result.scenario,Boolean(result.ok),JSON.stringify(result.checks),result.checks.find(x=>x.name==='runtime_exception')?.detail||null]);}catch(_){/* do not change the test result if telemetry persistence fails */}
  }
  res.json(result);
 }
