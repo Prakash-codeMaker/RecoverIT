@@ -1,5 +1,6 @@
 import { db } from 'hatchable';
 import { syncResolutionState } from 'lib/resolution.js';
+import { advanceCaseWorkflow } from 'lib/case-workflow.js';
 
 export const access='user';
 export const methods=['GET','POST'];
@@ -19,7 +20,8 @@ export default async function(req,res){
     await db.query('INSERT INTO case_events (case_id,event_type,title,detail,state,source) VALUES ($1,$2,$3,$4,$5,$6)',[''+caseId,'OUTCOME','Case reopened','The user reported that the issue is not resolved. RecoverIT will continue monitoring and investigation.','INVESTIGATING','User']);
   }
   const state=await syncResolutionState(caseId);
+  let workflow=null;try{workflow=await advanceCaseWorkflow(caseId,req.user.id,req.body?.action||'page_resume')}catch(_){/* workflow projection is retried by heartbeat */}
   const events=await db.query('SELECT title,detail,state,source,created_at FROM case_events WHERE case_id=$1 ORDER BY created_at DESC LIMIT 12',[caseId]);
   const c=(await db.query('SELECT case_number,status,amount,currency,issue_type,merchant_name,transaction_reference,ai_summary,ai_confidence,updated_at,resolved_at FROM recovery_cases WHERE id=$1',[caseId])).rows[0];
-  res.json({ok:true,case:c,state,timeline:events.rows});
+  res.json({ok:true,case:c,state,workflow,timeline:events.rows});
 }

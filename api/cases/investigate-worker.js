@@ -2,6 +2,7 @@ import { db, scheduler, email } from 'hatchable';
 import { generateJSON } from 'lib/recoverit-ai.js';
 import { getCase, addEvent } from 'lib/case.js';
 import { verifyCaseEvidence } from 'lib/case-verification.js';
+import { advanceCaseWorkflow } from 'lib/case-workflow.js';
 
 export const access='scheduler';
 export const methods=['POST'];
@@ -117,6 +118,7 @@ export default async function(req,res){
         await db.query('UPDATE recovery_cases SET status=$1,ai_status=$2,verification_state=$3,verification_reason=$4,updated_at=now() WHERE id=$5',['WAITING_FOR_USER',result==='REJECTED'?'EVIDENCE_REJECTED':'EVIDENCE_REVIEW',result,message,c.id]);
         await addEvent(c.id,result==='REJECTED'?'Correct proof required':'Proof verification required',message,'WAITING_FOR_USER','RecoverIT');
         await notify(c.user_id,c.id,result==='REJECTED'?'The proof is not correct for this case':'RecoverIT needs better-supported proof',result==='REJECTED'?'Upload the correct payment receipt, bank statement, transaction screen, or provider message for this payment.':'Upload another relevant payment document or retry verification.');
+        try{await advanceCaseWorkflow(c.id,c.user_id,'investigation_evidence_gate')}catch(_){ }
         return res.json({ok:true,status:'WAITING_FOR_USER',reason:result==='REJECTED'?'EVIDENCE_REJECTED':'EVIDENCE_REVIEW'});
       }
       if(result!=='VERIFIED'){
@@ -268,5 +270,6 @@ export default async function(req,res){
       // The global hourly monitor keeps this case active.
     }
   }
+  try{await advanceCaseWorkflow(c.id,c.user_id,'investigation_step_completed')}catch(_){/* durable heartbeat resumes the case */}
   res.json({ok:true,status:'INVESTIGATING',step:key,confidence});
 }

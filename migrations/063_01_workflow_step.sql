@@ -1,0 +1,1 @@
+ALTER TABLE recovery_cases ADD COLUMN workflow_step text NOT NULL DEFAULT 'RECEIVED';

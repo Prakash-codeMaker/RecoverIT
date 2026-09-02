@@ -2,6 +2,7 @@ import { db, storage } from 'hatchable';
 import { newCaseNumber, normalizeIssue, addEvent, addStep } from 'lib/case.js';
 import { scheduler } from 'hatchable';
 import { hashText } from 'lib/dispute.js';
+import { advanceCaseWorkflow } from 'lib/case-workflow.js';
 export const access='user'; export const methods=['POST'];
 export default async function(req,res){
  const u=req.user; const b=req.body||{}; const description=String(b.description||'').trim();
@@ -35,6 +36,6 @@ export default async function(req,res){
  else await addEvent(c.id,'Identity verified','RecoverIT verified the signed-in account email before continuing the investigation.','REPORTED','RecoverIT');
  await addStep(c.id,'understanding','Understanding your report','DONE','Story captured from voice/text.'); await addStep(c.id,'payment','Checking payment information','RUNNING'); await addStep(c.id,'timeline','Reconstructing payment timeline','PENDING'); await addStep(c.id,'provider','Checking provider status','PENDING'); await addStep(c.id,'safe_path','Determining safest next step','PENDING');
  await db.query('INSERT INTO notifications (user_id,case_id,type,title,description) VALUES ($1,$2,$3,$4,$5)',[u.id,c.id,'case_update','Investigation started',`RecoverIT created ${caseNo} and is beginning the evidence-aware investigation.`]);
- try{await scheduler.now('/api/jobs/case-verification',{case_id:c.id,user_id:u.id})}catch(_){/* verification is retried by the hourly verifier and must never block case creation */}
+ try{await advanceCaseWorkflow(c.id,u.id,'case_created')}catch(_){try{await scheduler.now('/api/jobs/case-verification',{case_id:c.id,user_id:u.id})}catch(_2){/* global workflow heartbeat remains the safety net */}}
  res.status(201).json(c);
 }

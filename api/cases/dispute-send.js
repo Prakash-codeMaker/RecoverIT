@@ -1,6 +1,7 @@
 import { db, email } from 'hatchable';
 import { getCase } from 'lib/case.js';
 import { sendTwilio } from 'lib/integrations.js';
+import { advanceCaseWorkflow } from 'lib/case-workflow.js';
 export const access='user'; export const methods=['POST'];
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 export default async function(req,res){
@@ -28,6 +29,7 @@ export default async function(req,res){
   await db.query('UPDATE dispute_attempts SET status=$1,sent_at=now(),external_reference=COALESCE($2,external_reference),next_follow_up_at=now()+interval \'72 hours\' WHERE id=$3',['SENT',ext,a.id]);
   await db.query('INSERT INTO dispute_state (case_id,user_id,phase,current_level,current_attempt_id,waiting_for_user,next_action,next_action_at) VALUES ($1,$2,$3,$4,$5,$6,$7,now()+interval \'72 hours\') ON CONFLICT (case_id) DO UPDATE SET phase=$3,current_level=$4,current_attempt_id=$5,waiting_for_user=$6,next_action=$7,next_action_at=now()+interval \'72 hours\',updated_at=now()',[c.id,req.user.id,'AWAITING_RESPONSE',a.level,a.id,false,`Waiting for ${a.organization}. RecoverIT will process the next response or document automatically.`,]);
   await db.query('INSERT INTO case_events (case_id,event_type,title,detail,state,source) VALUES ($1,$2,$3,$4,$5,$6)',[c.id,'DISPUTE_SENT',`Contacted ${a.organization}`,`RecoverIT sent the user-approved dispute through ${channel}.`,'AWAITING_RESPONSE','RecoverIT']);
-  res.json({ok:true,status:'SENT',organization:a.organization,channel,external_reference:ext,communication_message_id:msg.rows[0].id,next_follow_up_at:'72h'});
+  let workflow=null;try{workflow=await advanceCaseWorkflow(c.id,req.user.id,'external_contact_sent')}catch(_){ }
+  res.json({ok:true,status:'SENT',organization:a.organization,channel,external_reference:ext,communication_message_id:msg.rows[0].id,next_follow_up_at:'72h',workflow});
  }catch(e){await db.query('UPDATE communication_messages SET status=$1,error=$2,failed_at=now() WHERE id=$3',['FAILED',String(e.message||e),msg.rows[0].id]);await db.query('UPDATE dispute_attempts SET status=$1 WHERE id=$2',['FAILED',a.id]);res.status(503).json({error:'External organization contact failed.',detail:String(e.message||e)});}
 }

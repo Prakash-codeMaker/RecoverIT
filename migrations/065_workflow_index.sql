@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS recovery_cases_workflow_idx ON recovery_cases (workflow_status, workflow_step, workflow_updated_at);
