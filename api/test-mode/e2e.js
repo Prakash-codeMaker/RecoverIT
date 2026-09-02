@@ -102,7 +102,8 @@ export default async function(req,res){
 
   // 11) Check AI provider availability separately; this must not be conflated with workflow correctness.
   try{
-    const aiProbe=await analyzeDocument({mimeType:'image/png',bytes:Buffer.from('not-a-real-image'),prompt:'Return JSON only: {"verdict":"REVIEW","summary":"QA probe","confidence":0}'});
+    const qaPng=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=','base64');
+    const aiProbe=await analyzeDocument({mimeType:'image/png',bytes:qaPng,prompt:'Return JSON only: {"verdict":"REVIEW","summary":"QA probe","confidence":0}'});
     add(result,'ai_multimodal_probe',Boolean(aiProbe && (aiProbe.available||aiProbe.provider)),aiProbe?.available?`provider=${aiProbe.provider||'unknown'}`:'provider probe unavailable or rejected fixture');
   }catch(e){add(result,'ai_multimodal_probe',false,String(e.message||e));}
 
