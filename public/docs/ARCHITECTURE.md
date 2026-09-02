@@ -1,42 +1,43 @@
-# RecoverIT Architecture
+# RecoverIT architecture
 
-RecoverIT is organized around a persistent recovery case. The browser is an interface to the case; it is not the source of truth.
-
-## System boundary
-
-See [`recoverit-system-architecture.svg`](../assets/recoverit-system-architecture.svg).
+RecoverIT separates probabilistic AI interpretation from deterministic case control.
 
 ```text
-Web UI
-  ↓
-Authenticated case APIs
-  ↓
-Case workflow engine
-  ├── evidence verification
-  ├── investigation
-  ├── route preparation
-  ├── approval / external contact
-  ├── response handling
-  └── resolution
-  ↓
-PostgreSQL system of record
-
-AI interpretation and background jobs operate beside this core.
+Customer / payment context
+          ↓
+       RecoverIT UI
+          ↓
+        Case APIs
+          ↓
+┌────────────────────────────┐
+│ Persistent case workflow   │
+│ evidence · investigation   │
+│ recovery route · outcome   │
+└────────────┬───────────────┘
+             ↓
+        PostgreSQL state
+          ↙       ↘
+   AI reasoning   Background jobs
+        ↓              ↓
+ interpretation    monitoring / retry
+        ↓
+ deterministic safety gates
+        ↓
+ approved external action
 ```
 
-## Core modules
+### Product-to-code
 
-- `lib/case-workflow.js` — authoritative workflow reconciliation.
-- `lib/case-verification.js` — evidence verification orchestration and retry behavior.
-- `lib/case-brain.js` — case reasoning presentation, subordinated to persisted workflow state.
-- `lib/recoverit-ai.js` — AI provider abstraction and failover.
-- `lib/dispute.js` / `lib/dispute-automation.js` — recovery-route and external workflow logic.
-- `lib/resolution.js` — resolution state and outcome coordination.
+| Product capability | Code / state |
+|---|---|
+| Persistent workflow | `lib/case-workflow.js` + `recovery_cases.workflow_*` |
+| Evidence verification | `lib/case-verification.js` |
+| AI interpretation | `lib/recoverit-ai.js` + `lib/case-brain.js` |
+| Recovery routing | `lib/dispute.js` + `api/cases/dispute-*` |
+| Resolution | `lib/resolution.js` |
+| Background continuation | `api/jobs/workflow-heartbeat.js` |
+| Provider integration | `api/integrations/*` |
 
-## Background continuation
+### Why this scales
 
-Scheduled workers handle verification, payment monitoring, dispute follow-up, case monitoring and workflow heartbeat. This prevents the user's browser session from becoming a hidden dependency of the recovery process.
-
-## Scaling direction
-
-The current architecture is suitable for an early product because the workflow state is persisted and work can be resumed/retried. The next scaling steps are measured queue throughput, stronger observability, provider playbooks, batched workers, idempotency audits and reproducible evaluation at larger case volumes. These are scale paths, not claims of already-achieved production throughput.
+The unit of scale is the **case workflow**, not a chat session. Provider adapters, batched workers, idempotent actions, monitoring and outcome signals can expand around the same case contract as coverage grows.

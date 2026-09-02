@@ -531,6 +531,26 @@ For the Razorpay buildathon, the important outcome metrics are intended to be me
 
 ---
 
+## Product → company
+
+RecoverIT is designed to grow from a single recovery case into a reusable payment-resolution platform. The product surface stays focused on solving the user's problem; the repository documents the infrastructure underneath: persistent workflow state, evidence verification, provider routing, monitoring, integrations, safety gates, and outcome learning.
+
+```text
+payment problem
+      ↓
+RecoverIT case
+      ↓
+verified facts + evidence + approved action
+      ↓
+reusable recovery infrastructure
+      ↓
+more providers + payment contexts
+      ↓
+more recovery coverage
+```
+
+The homepage intentionally shows the **product**, while architecture, AI boundaries, reliability and scalability are exposed in this README and the technical documentation.
+
 ## Current status
 
 RecoverIT is an **active early-stage product build** with a working full-stack recovery workflow. It is not yet claiming production-scale financial volume; the next stage is to validate recovery quality, deepen provider coverage, harden observability, and scale the worker/integration layer.
