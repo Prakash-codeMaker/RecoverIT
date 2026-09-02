@@ -117,6 +117,18 @@ expose = false
 description = "Optional OpenAI API key used as an independent AI failover provider."
 
 [[secret]]
+key = "OPENROUTER_API_KEY"
+required = false
+expose = true
+description = "Optional OpenRouter API key for free-model AI failover and multimodal fallback. Keep usage scoped to server-side routes only."
+
+[[secret]]
+key = "GROQ_API_KEY"
+required = false
+expose = true
+description = "Optional Groq API key for fast text/vision AI failover. Keep usage scoped to server-side routes only."
+
+[[secret]]
 key = "ANTHROPIC_API_KEY"
 required = false
 expose = false
