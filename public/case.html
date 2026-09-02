@@ -54,7 +54,7 @@
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const st=s=>String(s||'').replaceAll('_',' '); const money=v=>Number(v)?'₹'+Number(v).toLocaleString('en-IN'):'Not provided';
  function showError(title,msg){root.innerHTML='<div class="loading"><div class="loadcard error"><div class="eyebrow">CASE ERROR</div><h1>'+esc(title)+'</h1><p class="muted">'+esc(msg)+'</p><div class="actions" style="margin-top:20px"><a class="btn primary" href="/app.html">Dashboard</a><button class="btn" id="retry">Retry</button></div></div></div>';document.getElementById('retry').onclick=load}
- async function getStatus(id){const ctl=new AbortController();const request=fetch('/api/cases/quick-status?case_id='+encodeURIComponent(id),{credentials:'include',cache:'no-store',signal:ctl.signal}).then(async r=>({r,d:await r.json()}));const timeout=new Promise((_,reject)=>setTimeout(()=>{ctl.abort();reject(new Error('TIMEOUT'))},2200));return await Promise.race([request,timeout])}
+ async function getStatus(id){const ctl=new AbortController();let timer=null;const request=fetch('/api/cases/quick-status?case_id='+encodeURIComponent(id),{credentials:'include',cache:'no-store',signal:ctl.signal}).then(async r=>({r,d:await r.json().catch(()=>({}))})).finally(()=>{if(timer)clearTimeout(timer)});const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>{ctl.abort();reject(new Error('TIMEOUT'))},8000)});return await Promise.race([request,timeout])}
  async function load(){
   if(loadBusy)return;
   loadBusy=true;
