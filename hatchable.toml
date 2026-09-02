@@ -232,6 +232,14 @@ write = "own"
 read = "own"
 write = "own"
 
+[db.tables.oauth_connections]
+read = "own"
+write = "own"
+
+[db.tables.oauth_states]
+read = "own"
+write = "own"
+
 [db.tables.outcome_training_examples]
 read = "own"
 write = "own"
