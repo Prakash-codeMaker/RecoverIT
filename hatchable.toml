@@ -55,6 +55,12 @@ expose = false
 description = "Razorpay webhook signing secret used to verify provider events."
 
 [[secret]]
+key = "RECOVERIT_DISPUTE_WEBHOOK_SECRET"
+required = false
+expose = false
+description = "Secret used to authenticate inbound organization dispute replies and attachments into RecoverIT."
+
+[[secret]]
 key = "GOOGLE_CLIENT_ID"
 required = false
 expose = true

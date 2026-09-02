@@ -1,21 +1,12 @@
 import { db } from 'hatchable';
-import { generateJSON } from 'lib/recoverit-ai.js';
 import { getCase } from 'lib/case.js';
-import { clean, prepareNextRoute } from 'lib/dispute.js';
+import { applyExternalResponse } from 'lib/dispute-automation.js';
 export const access='user'; export const methods=['POST'];
 export default async function(req,res){
  const c=await getCase(req.body?.case_id,req.user.id);if(!c)return res.status(404).json({error:'Case not found.'});
- const raw=clean(req.body?.response||'',6000);if(raw.length<5)return res.status(400).json({error:'Paste the organization response, acknowledgement, or the next message you received.'});
- let attemptId=req.body?.attempt_id||null; if(!attemptId){const cur=await db.query('SELECT current_attempt_id FROM dispute_state WHERE case_id=$1 AND user_id=$2',[c.id,req.user.id]);attemptId=cur.rows[0]?.current_attempt_id||null;} let parsed={state:'RECEIVED',next_action:'Review the response and provide any requested document or information.',confidence:0};
- try{const out=await generateJSON({purpose:'recoverit-dispute-response',prompt:`Classify this response to a payment dispute. Return JSON {state:"ACKNOWLEDGED|MORE_INFO_REQUIRED|RESOLVED|REJECTED|ESCALATED|UNCLASSIFIED",summary:"",requirements:[],next_action:"",due_hours:0,confidence:0}. Do not invent deadlines or outcomes. Response:${raw}`,maxTokens:700});if(out.parsed)parsed=out.parsed;}
- catch(_){ }
- const rr=await db.query('INSERT INTO dispute_responses (case_id,user_id,attempt_id,source,channel,raw_text,structured_response,interpreted_state,next_action,confidence) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id',[c.id,req.user.id,attemptId,'USER_CAPTURED','PASTE',raw,parsed,String(parsed.state||'UNCLASSIFIED'),String(parsed.next_action||''),Number(parsed.confidence)||0]);
- const reqs=Array.isArray(parsed.requirements)?parsed.requirements.slice(0,8):[];for(const item of reqs)await db.query('INSERT INTO dispute_requirements (case_id,user_id,attempt_id,requirement,reason) VALUES ($1,$2,$3,$4,$5)',[c.id,req.user.id,attemptId,String(item),String(parsed.summary||'')]);
- const state=String(parsed.state||'UNCLASSIFIED');const waiting=['MORE_INFO_REQUIRED'].includes(state);const resolved=state==='RESOLVED';const rejected=state==='REJECTED';
- await db.query('UPDATE dispute_attempts SET last_response_at=now(),status=$1 WHERE id=$2',[resolved?'RESOLVED':rejected?'REJECTED':'RESPONDED',attemptId||'00000000-0000-0000-0000-000000000000']);
- await db.query('UPDATE dispute_state SET phase=$1,waiting_for_user=$2,next_action=$3,next_action_at=CASE WHEN $2 THEN now() ELSE now()+interval \'72 hours\' END,resolution_status=$4,updated_at=now() WHERE case_id=$5',[resolved?'RESOLVED':waiting?'WAITING_FOR_USER':rejected?'ESCALATION_REQUIRED':'ANALYZE_RESPONSE',waiting||rejected,String(parsed.next_action||'Review response and continue the dispute loop.'),resolved?'RESOLVED':'OPEN',c.id]);
- await db.query('INSERT INTO case_events (case_id,event_type,title,detail,state,source) VALUES ($1,$2,$3,$4,$5,$6)',[c.id,'DISPUTE_RESPONSE_RECEIVED',`Response received from dispute channel`,clean(String(parsed.summary||raw),1200),resolved?'RESOLVED':waiting?'WAITING_FOR_USER':rejected?'ACTION_REQUIRED':'INVESTIGATING','RecoverIT AI']);
- if(resolved){await db.query('UPDATE recovery_cases SET status=$1,resolved_at=now(),updated_at=now() WHERE id=$2',['RESOLVED',c.id]);await db.query('UPDATE case_resolution_state SET resolution_status=$1,phase=$2,needs_user=$3,next_action=$4,summary=$5,resolved_at=now(),updated_at=now() WHERE case_id=$6',['RESOLVED','RESOLVED',false,'Payment dispute marked resolved from organization response.',clean(String(parsed.summary||raw),1500),c.id]);}else if(waiting){await db.query('UPDATE case_resolution_state SET resolution_status=$1,phase=$2,needs_user=$3,next_action=$4,summary=$5,last_meaningful_update_at=now(),updated_at=now() WHERE case_id=$6',['OPEN','ACTION_REQUIRED',true,String(parsed.next_action||'Provide the requested information.'),clean(String(parsed.summary||raw),1500),c.id]);}
- let advancement=null;if(rejected){try{advancement=await prepareNextRoute(c,req.user.id)}catch(_){advancement=null}}
- res.json({ok:true,response_id:rr.rows[0].id,state,summary:parsed.summary||'Response captured.',requirements:reqs,next_action:advancement?`Next escalation prepared for ${advancement.route.organization}.`:parsed.next_action||'Continue the dispute loop.',confidence:Number(parsed.confidence)||0,next_escalation:advancement?{attempt_id:advancement.attempt_id,organization:advancement.route.organization,level:advancement.route.level}:null});
+ const raw=String(req.body?.response||'').trim();if(raw.length<5)return res.status(400).json({error:'Paste the organization response, acknowledgement, or the next message you received.'});
+ let attemptId=String(req.body?.attempt_id||'').trim()||null;
+ if(!attemptId){attemptId=(await db.query('SELECT current_attempt_id FROM dispute_state WHERE case_id=$1 AND user_id=$2',[c.id,req.user.id])).rows[0]?.current_attempt_id||null;}
+ const result=await applyExternalResponse({caseRow:{id:c.id,user_id:c.user_id,description:c.description,amount:c.amount,currency:c.currency,merchant_name:c.merchant_name,payment_method:c.payment_method},attemptId,source:'USER_CAPTURED',channel:'PASTE',rawText:raw,metadata:{requirements:req.body?.requirements||[]},attachments:req.body?.attachments||[]});
+ res.json({ok:true,...result,next_escalation:null});
 }
