@@ -118,6 +118,14 @@ schedule = "0 3 * * *"
 read = "own"
 write = "own"
 
+[db.tables.case_payment_context]
+read = "own"
+write = "own"
+
+[db.tables.case_verification_runs]
+read = "own"
+write = "own"
+
 [db.tables.evidence]
 read = "own"
 write = "own"
