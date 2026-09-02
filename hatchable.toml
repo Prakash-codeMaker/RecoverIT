@@ -9,7 +9,7 @@ providers = ["google"]
 [[secret]]
 key = "GOOGLE_API_KEY"
 required = true
-expose = false
+expose = true
 description = "Google Gemini API credential used by RecoverIT's AI investigation engine."
 
 [project]
@@ -49,6 +49,70 @@ key = "razorpay_webhook_secret"
 required = false
 expose = false
 description = "Razorpay webhook signing secret used to verify provider events."
+
+[[secret]]
+key = "RAZORPAY_KEY_ID"
+required = false
+expose = true
+description = "Razorpay API key ID for provider reconciliation and approved refund execution."
+
+[[secret]]
+key = "RAZORPAY_KEY_SECRET"
+required = false
+expose = true
+description = "Razorpay API key secret for provider reconciliation and approved refund execution."
+
+[[secret]]
+key = "TWILIO_ACCOUNT_SID"
+required = false
+expose = true
+description = "Twilio account SID for optional SMS/WhatsApp delivery."
+
+[[secret]]
+key = "TWILIO_AUTH_TOKEN"
+required = false
+expose = true
+description = "Twilio authentication token for optional SMS/WhatsApp delivery."
+
+[[secret]]
+key = "TWILIO_SMS_FROM"
+required = false
+expose = true
+description = "Twilio SMS sender identity."
+
+[[secret]]
+key = "TWILIO_WHATSAPP_FROM"
+required = false
+expose = true
+description = "Twilio WhatsApp sender identity, normally in whatsapp:+... form."
+
+[[secret]]
+key = "AA_BASE_URL"
+required = false
+expose = true
+description = "Authorized Account Aggregator integration base URL."
+
+[[secret]]
+key = "AA_CLIENT_ID"
+required = false
+expose = true
+description = "Authorized Account Aggregator FIU client identifier."
+
+[[secret]]
+key = "AA_CLIENT_SECRET"
+required = false
+expose = true
+description = "Authorized Account Aggregator FIU client secret."
+
+[[secret]]
+key = "RECOVERIT_GEMINI_MODEL"
+required = false
+expose = true
+description = "Optional Gemini model override for document understanding." 
+
+[[cron]]
+path = "/api/outcomes/learn"
+schedule = "0 3 * * *"
 
 [db.tables.recovery_cases]
 read = "own"
