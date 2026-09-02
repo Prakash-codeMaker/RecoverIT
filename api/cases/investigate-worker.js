@@ -209,6 +209,9 @@ export default async function(req,res){
   if(next<STEPS.length){
     await scheduleNext(c.id,c.user_id);
   }else{
+    // Once the evidence-aware investigation reaches the recovery-plan stage, prepare the dispute route automatically.
+    // The dispute-plan endpoint is idempotent and will reuse an existing active attempt instead of creating duplicates.
+    if(evidence.length>0){try{await scheduler.now('/api/cases/dispute-plan',{case_id:c.id,user_id:c.user_id})}catch(_){/* route preparation must never break the core investigation */}}
     const reference=String(c.transaction_reference||'').trim();
     const waitingForReference=!reference;
     if(waitingForReference){
