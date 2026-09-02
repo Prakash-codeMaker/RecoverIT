@@ -154,8 +154,8 @@ export default async function(req,res){
     const missingProof=evidence.length===0;
     const needsEvidence=missingReference&&missingProof;
     const providerState=provider[0]?.canonical_state||null;
-    const message=needsEvidence ? 'We captured your story, but we cannot verify the request yet. Upload a screenshot, receipt, invoice, provider message, or provide the UTR/RRN/transaction reference. RecoverIT will continue automatically once we have a verifiable signal.' : missingReference ? 'We reviewed the available information, but provider reconciliation needs the UTR/RRN/transaction reference or provider response. Add it and RecoverIT will continue automatically.' : providerState ? `RecoverIT found a provider-side state (${providerState}) but the AI reasoning service is unavailable. The provider signal has not been turned into a final conclusion yet; monitoring continues automatically.` : 'RecoverIT is checking the available evidence and provider trail. The AI reasoning service is temporarily unavailable, so no unsupported payment state has been assumed.';
-    const nextSteps=needsEvidence ? ['Upload proof of the ₹500 request or provide the UTR/RRN/transaction reference.','If the Jio Store gave you a message, invoice, receipt, or written explanation, add that too.'] : [message];
+    const message=needsEvidence ? 'We captured your story, but we cannot verify the request yet. Upload a receipt, statement, transaction screenshot, provider message, or provide the UTR/RRN/transaction reference. RecoverIT will continue automatically once we have a verifiable signal.' : missingReference ? 'We reviewed the available information, but provider reconciliation needs the UTR/RRN/transaction reference or provider response. Add it and RecoverIT will continue automatically.' : providerState ? `RecoverIT found a provider-side state (${providerState}) but the AI reasoning service is unavailable. The provider signal has not been turned into a final conclusion yet; monitoring continues automatically.` : 'RecoverIT is checking the available evidence and provider trail. The AI reasoning service is temporarily unavailable, so no unsupported payment state has been assumed.';
+    const nextSteps=needsEvidence ? ['Upload the proof needed for this case or provide the UTR/RRN/transaction reference.','Add a provider or merchant response when it becomes available.'] : [message];
     await db.query('UPDATE recovery_cases SET status=$1,ai_status=$2,ai_summary=$3,ai_findings=$4::jsonb,ai_next_steps=$5::jsonb,ai_confidence=NULL,confidence_score=NULL,updated_at=now() WHERE id=$6',[needsEvidence?'WAITING_FOR_USER':'INVESTIGATING','UNAVAILABLE',message,JSON.stringify([{text:'The reported ₹500 request has not been independently verified.',status:'reported'},{text:'RecoverIT will not label the charge valid or invalid without supporting evidence.',status:'unknown'}]),JSON.stringify(nextSteps),c.id]);
     await setStep(c.id,key,needsEvidence?'DONE':'RUNNING',message);
     await addEvent(c.id,needsEvidence?'Evidence needed':'AI retry scheduled',message,needsEvidence?'WAITING_FOR_USER':'INVESTIGATING','RecoverIT');
@@ -212,7 +212,14 @@ export default async function(req,res){
   }else{
     // Once the evidence-aware investigation reaches the recovery-plan stage, prepare the dispute route automatically.
     // The dispute-plan endpoint is idempotent and will reuse an existing active attempt instead of creating duplicates.
-    if(evidence.length>0){try{await scheduler.now('/api/cases/dispute-plan',{case_id:c.id,user_id:c.user_id})}catch(_){/* route preparation must never break the core investigation */}}
+    const verification=String(c.verification_state||'').toUpperCase();
+    const readyForExternal=verification==='VERIFIED'
+      && evidence.length>0
+      && Boolean(String(c.transaction_reference||'').trim())
+      && Boolean(String(c.merchant_name||'').trim())
+      && Boolean(String(c.payment_method||'').trim())
+      && c.payment_method!=='Unknown';
+    if(readyForExternal){try{await scheduler.now('/api/cases/dispute-plan',{case_id:c.id,user_id:c.user_id})}catch(_){/* route preparation must never break the core investigation */}}
     const reference=String(c.transaction_reference||'').trim();
     const waitingForReference=!reference;
     if(waitingForReference){

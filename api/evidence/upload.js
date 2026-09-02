@@ -76,12 +76,39 @@ export default async function(req,res){
   const confidence=Number.isFinite(Number(verification.parsed?.confidence))?Number(verification.parsed.confidence):null;
   const reason=String(verification.summary||verification.reason||'New payment proof was attached and checked.');
   const aiStatus=normalizedVerification==='VERIFIED'?'EVIDENCE_VERIFIED':normalizedVerification==='REJECTED'?'EVIDENCE_REJECTED':normalizedVerification==='REVIEW'?'EVIDENCE_REVIEW':'PENDING';
-  await db.query('UPDATE recovery_cases SET status=$1,ai_status=$2,verification_state=$3,verification_confidence=$4,verification_last_checked_at=now(),verification_last_available_at=CASE WHEN $4::numeric IS NOT NULL THEN now() ELSE verification_last_available_at END,verification_reason=$5,updated_at=now() WHERE id=$6',['INVESTIGATING',aiStatus,normalizedVerification,confidence,reason,caseId]);
-  await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['DONE','Your new proof is attached. The original payment facts remain captured.',caseId,'payment']);
-  await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['RUNNING','New proof received. Comparing it with the existing case timeline.',caseId,'timeline']);
-  await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['QUEUED','Waiting for the provider check.',caseId,'provider']);
-  await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['QUEUED','Waiting for the updated recovery plan.',caseId,'safe_path']);
-  await db.query('INSERT INTO case_events (case_id,event_type,title,detail,state,source) VALUES ($1,$2,$3,$4,$5,$6)',[caseId,'EVIDENCE_RECEIVED','New proof received','RecoverIT received new proof and is checking it against the existing case.','INVESTIGATING','RecoverIT']);
+  if(normalizedVerification==='VERIFIED'){
+    const extracted=verification.parsed?.extracted||{};
+    const merchant=String(extracted.merchant||'').trim();
+    const reference=String(extracted.transaction_reference||extracted.utr||extracted.rrn||'').trim();
+    const method=String(extracted.payment_method||'').trim();
+    const amount=Number(extracted.amount);
+    if(merchant)await db.query('UPDATE recovery_cases SET merchant_name=COALESCE(NULLIF(merchant_name,\'\'),$1) WHERE id=$2',[merchant,caseId]);
+    if(reference)await db.query('UPDATE recovery_cases SET transaction_reference=COALESCE(NULLIF(transaction_reference,\'\'),$1) WHERE id=$2',[reference,caseId]);
+    if(method)await db.query('UPDATE recovery_cases SET payment_method=CASE WHEN payment_method IS NULL OR payment_method=\'\' OR lower(payment_method)=\'unknown\' THEN $1 ELSE payment_method END WHERE id=$2',[method,caseId]);
+    if(Number.isFinite(amount)&&amount>0)await db.query('UPDATE recovery_cases SET amount=CASE WHEN amount IS NULL OR amount=0 THEN $1 ELSE amount END WHERE id=$2',[amount,caseId]);
+  }
+  const evidenceTrusted=normalizedVerification==='VERIFIED';
+  const evidenceRejected=normalizedVerification==='REJECTED';
+  const evidenceNeedsReview=normalizedVerification==='REVIEW';
+  const nextCaseStatus=evidenceRejected||evidenceNeedsReview?'WAITING_FOR_USER':'INVESTIGATING';
+  await db.query('UPDATE recovery_cases SET status=$1,ai_status=$2,verification_state=$3,verification_confidence=$4,verification_last_checked_at=now(),verification_last_available_at=CASE WHEN $4::numeric IS NOT NULL THEN now() ELSE verification_last_available_at END,verification_reason=$5,updated_at=now() WHERE id=$6',[nextCaseStatus,aiStatus,normalizedVerification,confidence,reason,caseId]);
+  if(evidenceTrusted){
+    await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['DONE','Your proof is verified. RecoverIT is advancing to the next payment/timeline check.',caseId,'payment']);
+    await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['RUNNING','Verified proof received. RecoverIT is comparing it with the existing case timeline.',caseId,'timeline']);
+    await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['QUEUED','Waiting for the provider reconciliation.',caseId,'provider']);
+    await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['QUEUED','Waiting for the updated recovery plan.',caseId,'safe_path']);
+  }else if(evidenceRejected){
+    await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['RUNNING','The uploaded proof could not be matched. RecoverIT is waiting for a relevant replacement.',caseId,'payment']);
+    await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['PENDING','Waiting for usable payment proof.',caseId,'timeline']);
+    await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['PENDING','Waiting until payment evidence is verified.',caseId,'provider']);
+    await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['PENDING','Waiting until the payment evidence stage is complete.',caseId,'safe_path']);
+  }else{
+    await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['RUNNING','Proof is attached and automated verification is still in progress. No later stage will start until this proof is resolved.',caseId,'payment']);
+    await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['PENDING','Waiting for payment proof verification.',caseId,'timeline']);
+    await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['PENDING','Waiting for verified payment evidence.',caseId,'provider']);
+    await db.query('UPDATE investigation_steps SET status=$1,detail=$2,completed_at=NULL WHERE case_id=$3 AND step_key=$4',['PENDING','Waiting for the verified payment evidence stage.',caseId,'safe_path']);
+  }
+  await db.query('INSERT INTO case_events (case_id,event_type,title,detail,state,source) VALUES ($1,$2,$3,$4,$5,$6)',[caseId,'EVIDENCE_RECEIVED','New proof received',evidenceRejected?'RecoverIT received the proof but it did not support the case.':evidenceNeedsReview?'RecoverIT received the proof but it still needs review.':evidenceTrusted?'RecoverIT verified the new proof and is advancing the same case.':'RecoverIT received the proof and is checking it now.',nextCaseStatus,'RecoverIT']);
 
   let followup=null;
   const dispute=(await db.query('SELECT waiting_for_user,current_attempt_id FROM dispute_state WHERE case_id=$1 AND user_id=$2',[caseId,req.user.id])).rows[0]||null;
