@@ -1,14 +1,57 @@
 # RecoverIT
 
-> **Your payment problem doesn't end when you report it.**
+> ## AI revenue recovery, from messy payment story to verified action.
 >
-> RecoverIT is an AI-assisted payment dispute resolution platform designed to help people understand payment problems, organize evidence, take the right next action, monitor progress, and move toward resolution.
+> RecoverIT is being built as a **payment-resolution layer**: it turns fragmented payment evidence into a persistent case, determines the next legitimate recovery step, asks the user before consequential action, and keeps the workflow moving until there is an outcome.
 
-[![Status](https://img.shields.io/badge/status-active%20prototype-orange)](https://recoverit.hatchable.site)
+[![Status](https://img.shields.io/badge/status-active%20product%20build-orange)](https://recoverit.hatchable.site)
 [![Built with](https://img.shields.io/badge/built%20with-Hatchable-black)](https://hatchable.ai)
 [![AI](https://img.shields.io/badge/AI-multimodal%20%2B%20provider%20failover-blue)](https://ai.google.dev/)
+[![Workflow](https://img.shields.io/badge/workflow-durable%20%26%20auditable-brightgreen)](./public/assets/recoverit-workflow.svg)
 
-**Live product:** https://recoverit.hatchable.site
+### Start here
+
+**Live product:** https://recoverit.hatchable.site  ·  **Repository thesis:** AI interprets; deterministic controls decide.
+
+![RecoverIT judge demo](./public/assets/recoverit-demo-case.svg)
+
+> **The product loop:** report → understand → verify → investigate → route → user approval → recover → monitor → resolve.
+
+---
+
+## What RecoverIT is becoming
+
+RecoverIT should not feel like a complaint form with an AI chatbot attached. The long-term product is a **resolution system for money problems** where the unit of work is a durable case, not a conversation.
+
+```text
+Payment problem
+      ↓
+Persistent case
+      ↓
+Evidence + payment facts
+      ↓
+AI interpretation
+      ↓
+Deterministic safety gates
+      ↓
+Legitimate recovery route
+      ↓
+Explicit user approval
+      ↓
+External action / guided handoff
+      ↓
+Provider response + monitoring
+      ↓
+Recovery / escalation / resolution
+```
+
+The company opportunity is to make fragmented payment-resolution work **executable, measurable and increasingly routable** across merchants, gateways, banks, UPI and other payment contexts. The current build is an early product foundation; scale claims beyond the demonstrated system are intentionally treated as roadmap, not as already-achieved production volume.
+
+![RecoverIT product-to-company thesis](./public/assets/recoverit-company-loop.svg)
+
+### Why this matters
+
+Payment support is fragmented across the user, merchant, payment gateway, bank, UPI rail, refund system and support queue. RecoverIT's product thesis is that the missing layer is not another place to file a complaint. It is a system that can **reconstruct the case, preserve state, select a legitimate next step, execute only within explicit bounds, and remain on the thread until the outcome is confirmed**.
 
 ---
 
@@ -408,58 +451,56 @@ If you are developing this project outside Hatchable, you will need to provide e
 
 ---
 
-## Project structure
+## Repository map
 
 ```text
 .
+├── README.md
+├── hatchable.toml
 ├── api/
-│   ├── account/
-│   ├── actions/
-│   ├── admin/
-│   ├── cases/
-│   ├── evidence/
-│   ├── feedback/
-│   ├── jobs/
-│   ├── notifications/
-│   ├── payment/
-│   ├── product/
-│   ├── provider-intelligence/
-│   ├── verification/
-│   └── webhooks/
-│
+│   ├── cases/                 # case lifecycle, investigation, dispute, workflow
+│   ├── evidence/              # upload + analysis + verification
+│   ├── integrations/          # Razorpay, Google Drive and provider integrations
+│   ├── jobs/                  # background continuation and monitoring
+│   ├── payment/               # payment checks and verification
+│   ├── webhooks/              # provider/external response entry points
+│   └── ...
 ├── lib/
-│   ├── case.js
-│   ├── case-brain.js
-│   ├── case-verification.js
-│   ├── case-workflow.js
-│   ├── dispute.js
-│   ├── dispute-automation.js
-│   ├── integrations.js
-│   ├── recoverit-ai.js
-│   └── resolution.js
-│
-├── migrations/
-│   ├── 001_core.sql ... 062_google_drive_case_return.sql
-│   ├── 063_*_workflow_*.sql
-│   ├── 064_*_workflow_*.sql
-│   └── 065_workflow_index.sql
-│
+│   ├── case-workflow.js       # authoritative workflow engine
+│   ├── case-verification.js   # evidence verification + retries
+│   ├── case-brain.js          # case reasoning/presentation
+│   ├── recoverit-ai.js        # AI provider abstraction + failover
+│   ├── dispute.js             # route and dispute logic
+│   ├── dispute-automation.js  # continuing external workflow
+│   ├── resolution.js          # resolution/outcome logic
+│   └── integrations.js        # provider integration helpers
+├── migrations/                # 001 → 065 versioned PostgreSQL schema
 ├── public/
-│   ├── index.html
-│   ├── app.html
-│   ├── case.html
-│   ├── report.html
-│   ├── resolution.html
-│   ├── notifications.html
-│   ├── feedback.html
-│   ├── admin.html
-│   ├── cases/
-│   ├── india/
-│   ├── vendor/
-│   └── *.css / *.js
-│
-└── hatchable.toml
+│   ├── index.html             # public product experience
+│   ├── app.html               # authenticated workspace
+│   ├── case.html              # live recovery case
+│   ├── report.html            # case creation/readiness
+│   ├── resolution.html        # resolution surface
+│   ├── assets/                # architecture + judge-demo visuals
+│   ├── docs/                  # architecture, workflow, safety, reliability
+│   ├── cases/                 # problem-specific visual assets
+│   └── ...
+└── pages/
+    └── share/[token].js       # secure case-share surface
 ```
+
+### Product-to-code map
+
+| Product promise | Implementation |
+|---|---|
+| Persistent case state | `lib/case-workflow.js` + `recovery_cases.workflow_*` |
+| Evidence verification | `lib/case-verification.js` + `api/evidence/*` |
+| AI interpretation | `lib/recoverit-ai.js` + `lib/case-brain.js` |
+| Safe external recovery | `lib/dispute.js` + `api/cases/dispute-*` |
+| Background continuation | `api/jobs/workflow-heartbeat.js` + scheduled workers |
+| Provider integration | `api/integrations/*` + provider directory |
+| Outcome / resolution | `lib/resolution.js` + `api/cases/resolution-state.js` |
+| End-to-end verification | `api/test-mode/e2e.js` + recovery suite |
 
 ---
 
@@ -492,7 +533,7 @@ For the Razorpay buildathon, the important outcome metrics are intended to be me
 
 ## Current status
 
-RecoverIT is an **active prototype / early-stage product**.
+RecoverIT is an **active early-stage product build** with a working full-stack recovery workflow. It is not yet claiming production-scale financial volume; the next stage is to validate recovery quality, deepen provider coverage, harden observability, and scale the worker/integration layer.
 
 > **Repository note:** The GitHub repository is intended to publish the source code and architecture. Production credentials, database data, customer evidence, generated private assets, and deployed infrastructure state are not part of the repository.
 
