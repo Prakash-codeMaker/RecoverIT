@@ -5,12 +5,13 @@ export const methods=['POST'];
 export const schedule='30 * * * *';
 
 const BATCH_SIZE=100;
-const CONCURRENCY=5;
+const CONCURRENCY=2;
 
 export default async function(req,res){
  const cases=(await db.query(`SELECT c.id,c.user_id
    FROM recovery_cases c
    WHERE c.status NOT IN ('CLOSED','RESOLVED')
+     AND EXISTS (SELECT 1 FROM evidence e WHERE e.case_id=c.id)
      AND (
        c.verification_last_checked_at IS NULL
        OR c.verification_last_checked_at < now() - interval '30 minutes'
