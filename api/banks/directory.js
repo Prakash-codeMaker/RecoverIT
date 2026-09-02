@@ -1,0 +1,3 @@
+import { db } from 'hatchable';
+export const access='user'; export const methods=['GET'];
+export default async function(req,res){const q=String(req.query?.q||'').trim().toLowerCase();const rows=(await db.query('SELECT bank_key,display_name,aliases,complaint_url,official_url,customer_care,response_expectation_days,source_url FROM bank_directory WHERE active=true ORDER BY display_name')).rows;const out=q?rows.filter(x=>[x.bank_key,x.display_name,...(Array.isArray(x.aliases)?x.aliases:[])].join(' ').toLowerCase().includes(q)):rows;res.json({ok:true,banks:out});}
