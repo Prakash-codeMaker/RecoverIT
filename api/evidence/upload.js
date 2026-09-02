@@ -41,7 +41,7 @@ export default async function(req,res){
         if(pfFile){
           verification={status:String(pfFile.verdict||'REVIEW').toUpperCase(),summary:String(pfFile.summary||''),parsed:pfFile};
           await db.query(
-            'INSERT INTO evidence_analysis (evidence_id,case_id,analysis_type,status,extracted_text,structured_data,authenticity_signals,confidence,model) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (evidence_id,analysis_type) DO UPDATE SET status=$4,extracted_text=$5,structured_data=$6,authenticity_signals=$7,confidence=$8,model=$9,updated_at=now()',
+            'INSERT INTO evidence_analysis (evidence_id,case_id,analysis_type,status,extracted_text,structured_data,authenticity_signals,confidence,model) VALUES ($1,$2,$3,$4,$5::text,$6::jsonb,$7::jsonb,$8::numeric,$9::text) ON CONFLICT (evidence_id,analysis_type) DO UPDATE SET status=$4::text,extracted_text=$5::text,structured_data=$6::jsonb,authenticity_signals=$7::jsonb,confidence=$8::numeric,model=$9::text,updated_at=now()',
             [inserted.rows[0].id,caseId,'document_understanding','COMPLETED',String(pfFile.extracted_text||pfFile.summary||''),pfFile,JSON.stringify(Array.isArray(pfFile.authenticity_signals)?pfFile.authenticity_signals:[]),Number.isFinite(Number(pfFile.confidence))?Number(pfFile.confidence):null,'preflight_cache']
           );
         }
@@ -61,7 +61,7 @@ export default async function(req,res){
         const parsed=out.parsed;
         verification={status:String(parsed.verdict||'REVIEW').toUpperCase(),summary:String(parsed.summary||'').slice(0,1000),parsed,provider:out.provider,failover_from:out.failover_from||[]};
         await db.query(
-          'INSERT INTO evidence_analysis (evidence_id,case_id,analysis_type,status,extracted_text,structured_data,authenticity_signals,confidence,model) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (evidence_id,analysis_type) DO UPDATE SET status=$4,extracted_text=$5,structured_data=$6,authenticity_signals=$7,confidence=$8,model=$9,updated_at=now()',
+          'INSERT INTO evidence_analysis (evidence_id,case_id,analysis_type,status,extracted_text,structured_data,authenticity_signals,confidence,model) VALUES ($1,$2,$3,$4,$5::text,$6::jsonb,$7::jsonb,$8::numeric,$9::text) ON CONFLICT (evidence_id,analysis_type) DO UPDATE SET status=$4::text,extracted_text=$5::text,structured_data=$6::jsonb,authenticity_signals=$7::jsonb,confidence=$8::numeric,model=$9::text,updated_at=now()',
           [inserted.rows[0].id,caseId,'document_understanding','COMPLETED',String(parsed.extracted_text||parsed.summary||''),parsed,JSON.stringify(Array.isArray(parsed.authenticity_signals)?parsed.authenticity_signals:[]),Number.isFinite(Number(parsed.confidence))?Number(parsed.confidence):null,`${out.provider||'ai'}${out.failover_from?.length?'-failover':''}`]
         );
       }
