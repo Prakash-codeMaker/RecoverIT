@@ -1,12 +1,12 @@
 import { db, ai } from 'hatchable';
 import { getCase } from 'lib/case.js';
-import { getRoutes, buildPackage, clean } from 'lib/dispute.js';
+import { eligibleRoutes, buildPackage, clean } from 'lib/dispute.js';
 export const access='user'; export const methods=['POST'];
 export default async function(req,res){
  const c=await getCase(req.body?.case_id,req.user.id);if(!c)return res.status(404).json({error:'Case not found.'});
  const evidence=(await db.query('SELECT id,filename,content_type,bytes,sha256 FROM evidence WHERE case_id=$1 ORDER BY created_at',[c.id])).rows;
  if(!evidence.length)return res.status(409).json({error:'Related proof is compulsory before RecoverIT can prepare a dispute.'});
- const routes=await getRoutes(c); if(!routes.length)return res.status(404).json({error:'No verified escalation route is available for this case yet.'});
+ const routes=await eligibleRoutes(c,req.user.id); if(!routes.length)return res.status(404).json({error:'No verified escalation route is available for this case yet.'});
  const route=routes[0];let recommendation='';
  try{const out=await ai.generateText({model:'gemini-flash',purpose:'recoverit-dispute-routing',prompt:`Choose the safest first escalation route for this verified payment dispute. Do not invent policies. Prefer direct provider complaint before ombudsman unless the route explicitly supports immediate fraud reporting. Return JSON {recommendation,missing,reason}. Case:${JSON.stringify({issue_type:c.issue_type,payment_method:c.payment_method,provider:c.merchant_name,reference:c.transaction_reference,evidence:evidence.map(x=>x.filename),summary:c.ai_summary||''})}`,maxTokens:700});recommendation=String(out.text||'')}catch(_){recommendation='Deterministic route selected from the verified case type and payment method.'}
  const packageJson=buildPackage(c,evidence,c.ai_summary||'',route);
