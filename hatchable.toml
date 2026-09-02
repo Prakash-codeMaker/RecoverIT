@@ -1,279 +1,135 @@
+[project]
+name="RecoverIT"
+slug="recoverit"
+
 [auth]
-enabled = true
-providers = ["email", "google"]
+enabled=true
+providers=["email","google"]
 
 [ai]
-required = true
-providers = ["google", "openai", "anthropic"]
+required=true
 
 [[secret]]
-key = "GOOGLE_API_KEY"
-required = false
-expose = false
-description = "Legacy Google credential retained for compatibility; active AI access is managed by the Hatchable AI capability."
-
-[project]
-name = "RecoverIT"
-
-# Public repository: secrets stay in Hatchable Setup and are never committed.
-[db.tables.case_outcome_signals]
-read = "own"
-write = "own"
-
-[db.tables.escalation_preparations]
-read = "own"
-write = "own"
-
-[db.tables.payment_monitors]
-read = "own"
-write = "own"
-
-[db.tables.payment_protection_items]
-read = "own"
-write = "own"
-
-[db.tables.product_signals]
-read = "own"
-write = "own"
-
-[db.tables.case_resolution_state]
-read = "own"
-write = "own"
-
-[db.tables.case_brain]
-read = "own"
-write = "own"
-
-[[cron]]
-path = "/api/jobs/case-monitor"
-schedule = "0 * * * *"
-
+name="RECOVERIT_DISPUTE_WEBHOOK_SECRET"
+expose=true
 [[secret]]
-key = "razorpay_webhook_secret"
-required = false
-expose = false
-description = "Razorpay webhook signing secret used to verify provider events."
-
+name="TWILIO_ACCOUNT_SID"
+expose=true
 [[secret]]
-key = "RECOVERIT_DISPUTE_WEBHOOK_SECRET"
-required = false
-expose = false
-description = "Secret used to authenticate inbound organization dispute replies and attachments into RecoverIT."
-
+name="TWILIO_AUTH_TOKEN"
+expose=true
 [[secret]]
-key = "GOOGLE_CLIENT_ID"
-required = false
-expose = true
-description = "Google OAuth client ID for Google Drive document import."
-
+name="TWILIO_SMS_FROM"
+expose=true
 [[secret]]
-key = "GOOGLE_CLIENT_SECRET"
-required = false
-expose = true
-description = "Google OAuth client secret for server-side Google Drive authorization-code exchange."
-
+name="TWILIO_WHATSAPP_FROM"
+expose=true
 [[secret]]
-key = "GOOGLE_REDIRECT_URI"
-required = false
-expose = true
-description = "Exact Google Drive OAuth callback URL for RecoverIT."
-
+name="RAZORPAY_KEY_ID"
+expose=true
 [[secret]]
-key = "RAZORPAY_KEY_ID"
-required = false
-expose = true
-description = "Razorpay API key ID for provider reconciliation and approved refund execution."
-
+name="RAZORPAY_KEY_SECRET"
+expose=true
 [[secret]]
-key = "RAZORPAY_KEY_SECRET"
-required = false
-expose = true
-description = "Razorpay API key secret for provider reconciliation and approved refund execution."
-
+name="RAZORPAY_WEBHOOK_SECRET"
+expose=true
 [[secret]]
-key = "TWILIO_ACCOUNT_SID"
-required = false
-expose = true
-description = "Twilio account SID for optional SMS/WhatsApp delivery."
-
+name="GOOGLE_API_KEY"
+expose=true
 [[secret]]
-key = "TWILIO_AUTH_TOKEN"
-required = false
-expose = true
-description = "Twilio authentication token for optional SMS/WhatsApp delivery."
-
+name="RECOVERIT_GEMINI_MODEL"
+expose=true
 [[secret]]
-key = "TWILIO_SMS_FROM"
-required = false
-expose = true
-description = "Twilio SMS sender identity."
-
+name="AA_BASE_URL"
+expose=true
 [[secret]]
-key = "TWILIO_WHATSAPP_FROM"
-required = false
-expose = true
-description = "Twilio WhatsApp sender identity, normally in whatsapp:+... form."
-
+name="AA_CLIENT_ID"
+expose=true
 [[secret]]
-key = "AA_BASE_URL"
-required = false
-expose = true
-description = "Authorized Account Aggregator integration base URL."
-
-[[secret]]
-key = "AA_CLIENT_ID"
-required = false
-expose = true
-description = "Authorized Account Aggregator FIU client identifier."
-
-[[secret]]
-key = "AA_CLIENT_SECRET"
-required = false
-expose = true
-description = "Authorized Account Aggregator FIU client secret."
-
-[[secret]]
-key = "RECOVERIT_GEMINI_MODEL"
-required = false
-expose = true
-description = "Optional Gemini model override for document understanding."
-
-[[secret]]
-key = "OPENAI_API_KEY"
-required = false
-expose = false
-description = "Optional OpenAI API key used as an independent AI failover provider."
-
-[[secret]]
-key = "OPENROUTER_API_KEY"
-required = false
-expose = true
-description = "Optional OpenRouter API key for free-model AI failover and multimodal fallback. Keep usage scoped to server-side routes only."
-
-[[secret]]
-key = "GROQ_API_KEY"
-required = false
-expose = true
-description = "Optional Groq API key for fast text/vision AI failover. Keep usage scoped to server-side routes only."
-
-[[secret]]
-key = "ANTHROPIC_API_KEY"
-required = false
-expose = false
-description = "Optional Anthropic API key used as an independent AI failover provider."
-
-[[secret]]
-key = "RECOVERIT_OPENAI_MODEL"
-required = false
-expose = true
-description = "Optional OpenAI model override."
-
-[[secret]]
-key = "RECOVERIT_OPENAI_VISION_MODEL"
-required = false
-expose = true
-description = "Optional OpenAI vision model override."
-
-[[secret]]
-key = "RECOVERIT_ANTHROPIC_MODEL"
-required = false
-expose = true
-description = "Optional Anthropic model override."
-
-[[secret]]
-key = "RECOVERIT_ANTHROPIC_VISION_MODEL"
-required = false
-expose = true
-description = "Optional Anthropic vision model override." 
-
-[[cron]]
-path = "/api/outcomes/learn"
-schedule = "0 3 * * *"
+name="AA_CLIENT_SECRET"
+expose=true
 
 [db.tables.recovery_cases]
-read = "own"
-write = "own"
-
-[db.tables.case_payment_context]
-read = "own"
-write = "own"
-
-[db.tables.case_verification_runs]
-read = "own"
-write = "own"
-
+read="own"
+write="own"
 [db.tables.evidence]
-read = "own"
-write = "own"
-
-[db.tables.notifications]
-read = "own"
-write = "own"
-
-[db.tables.notification_preferences]
-read = "own"
-write = "own"
-
-[db.tables.feedback]
-read = "own"
-write = "own"
-
-[db.tables.action_executions]
-read = "own"
-write = "own"
-
-[db.tables.communication_messages]
-read = "own"
-write = "own"
-
-[db.tables.escalation_deliveries]
-read = "own"
-write = "own"
-
-[db.tables.financial_transactions]
-read = "own"
-write = "own"
-
-[db.tables.integration_connections]
-read = "own"
-write = "own"
-
-[db.tables.oauth_connections]
-read = "own"
-write = "own"
-
-[db.tables.oauth_states]
-read = "own"
-write = "own"
-
-[db.tables.outcome_training_examples]
-read = "own"
-write = "own"
-
-[db.tables.reconciliation_runs]
-read = "own"
-write = "own"
-
-[db.tables.case_preflights]
-read = "own"
-write = "own"
-
+read="own"
+write="own"
 [db.tables.dispute_attempts]
-read = "own"
-write = "own"
-
+read="own"
+write="own"
 [db.tables.dispute_requirements]
-read = "own"
-write = "own"
-
+read="own"
+write="own"
 [db.tables.dispute_responses]
-read = "own"
-write = "own"
-
+read="own"
+write="own"
 [db.tables.dispute_state]
-read = "own"
-write = "own"
-
-[db.tables.dispute_routes]
-read = "public"
-write = "public"
+read="own"
+write="own"
+[db.tables.case_brain]
+read="own"
+write="own"
+[db.tables.case_resolution_state]
+read="own"
+write="own"
+[db.tables.case_payment_context]
+read="own"
+write="own"
+[db.tables.case_verification_runs]
+read="own"
+write="own"
+[db.tables.communication_messages]
+read="own"
+write="own"
+[db.tables.financial_transactions]
+read="own"
+write="own"
+[db.tables.payment_monitors]
+read="own"
+write="own"
+[db.tables.payment_protection_items]
+read="own"
+write="own"
+[db.tables.notification_preferences]
+read="own"
+write="own"
+[db.tables.notifications]
+read="own"
+write="own"
+[db.tables.integration_connections]
+read="own"
+write="own"
+[db.tables.oauth_connections]
+read="own"
+write="own"
+[db.tables.oauth_states]
+read="own"
+write="own"
+[db.tables.reconciliation_runs]
+read="own"
+write="own"
+[db.tables.escalation_preparations]
+read="own"
+write="own"
+[db.tables.escalation_deliveries]
+read="own"
+write="own"
+[db.tables.action_executions]
+read="own"
+write="own"
+[db.tables.outcome_training_examples]
+read="own"
+write="own"
+[db.tables.case_outcome_signals]
+read="own"
+write="own"
+[db.tables.feedback]
+read="own"
+write="own"
+[db.tables.product_signals]
+read="own"
+write="own"
+[db.tables.case_preflights]
+read="own"
+write="own"
