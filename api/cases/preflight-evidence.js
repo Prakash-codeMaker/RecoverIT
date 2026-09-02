@@ -26,10 +26,9 @@ Return ONLY JSON:
 VERIFIED means the file is clearly relevant and materially supports the story with no material contradiction. REVIEW means it is relevant/possibly relevant but an important fact cannot be established. REJECT means it is unrelated, materially contradicts the story, or is unreadable enough that it cannot function as proof. Never invent values.`;
   try{
    const out=await analyzeDocument({mimeType:f.contentType,bytes:f.buffer,prompt});
-   if(!out.available){results.push({filename:f.filename,content_type:f.contentType,bytes:f.buffer.length,document_type:'unverified',relevance:'unclear',verdict:'REVIEW',summary:'Automated verification is temporarily unavailable across configured providers; manual review is required.',extracted:{},matches:[],contradictions:[],authenticity_signals:['No AI provider available'],missing_for_verification:['Independent verification'],confidence:0});continue;}
-   const parsed=out.parsed;
+   const parsed=out?.data;
    if(!parsed)throw new Error('The evidence verifier returned invalid structured output.');
-   results.push({filename:f.filename,content_type:f.contentType,bytes:f.buffer.length,provider:out.provider,failover_from:out.failover_from||[],...parsed});
+   results.push({filename:f.filename,content_type:f.contentType,bytes:f.buffer.length,provider:out.provider,model:out.model,...parsed});
   }catch(error){return res.status(502).json({error:'Could not verify the uploaded proof. The case was not created.',detail:String(error.message||error)})}
  }
  const verdicts=results.map(x=>String(x.verdict||'REVIEW').toUpperCase());
