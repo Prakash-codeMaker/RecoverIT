@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS case_verification_one_running_idx ON case_verification_runs(case_id) WHERE status='RUNNING';
