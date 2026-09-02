@@ -1,0 +1,3 @@
+ALTER TABLE dispute_routes ADD COLUMN IF NOT EXISTS provider_directory_id uuid;
+CREATE INDEX IF NOT EXISTS dispute_routes_provider_directory_idx ON dispute_routes(provider_directory_id);
+UPDATE dispute_routes r SET provider_directory_id=d.id FROM provider_directory d WHERE r.provider_directory_id IS NULL AND ((r.organization='National Consumer Helpline' AND d.provider_key='nch') OR (r.organization='National Cyber Crime Reporting Portal' AND d.provider_key='cybercrime') OR (r.organization='Payer bank / UPI PSP' AND d.provider_key='npcI_upi') OR (r.organization='RBI Ombudsman' AND d.provider_key='rbi_ombudsman_2026'));

@@ -26,8 +26,8 @@ Return ONLY JSON:
 VERIFIED means the file is clearly relevant and materially supports the story with no material contradiction. REVIEW means it is relevant/possibly relevant but an important fact cannot be established. REJECT means it is unrelated, materially contradicts the story, or is unreadable enough that it cannot function as proof. Never invent values.`;
   try{
    const out=await googleVisionDocument({mimeType:f.contentType,bytes:f.buffer,prompt});
-   if(!out.configured)return res.status(503).json({error:'Evidence verification is not configured yet. Add the server-side Google AI credential before creating cases with proof.',configured:false});
-   if(!out.ok)return res.status(502).json({error:'Evidence verification service failed. The case was not created.',provider:out.data});
+   if(!out.configured){results.push({filename:f.filename,content_type:f.contentType,bytes:f.buffer.length,document_type:'unverified',relevance:'unclear',verdict:'REVIEW',summary:'Automated document verification is not configured; manual review is required.',extracted:{},matches:[],contradictions:[],authenticity_signals:['Automated verification unavailable'],missing_for_verification:['Independent verification'],confidence:0});continue;}
+   if(!out.ok){const providerText=JSON.stringify(out.data||{});const quota=/429|quota|RESOURCE_EXHAUSTED/i.test(providerText);if(quota){results.push({filename:f.filename,content_type:f.contentType,bytes:f.buffer.length,document_type:'unverified',relevance:'unclear',verdict:'REVIEW',summary:'Automated document verification is temporarily unavailable; manual review is required.',extracted:{},matches:[],contradictions:[],authenticity_signals:['Verifier quota/service unavailable'],missing_for_verification:['Independent verification'],confidence:0});continue;}return res.status(502).json({error:'Evidence verification service failed. The case was not created.',provider:out.data});}
    const parsed=parseJson(extractGeminiText(out.data));
    if(!parsed)throw new Error('The evidence verifier returned invalid structured output.');
    results.push({filename:f.filename,content_type:f.contentType,bytes:f.buffer.length,...parsed});
