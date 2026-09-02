@@ -1,5 +1,3 @@
-[![Deploy to Hatchable](https://hatchable.com/deploy-button.svg)](https://hatchable.com/deploy?repo=https://github.com/Prakash-codeMaker/RecoverIT)
-
 # RecoverIT
 
 <p align="center">
@@ -260,6 +258,26 @@ The repository contains a reproducible test-mode recovery harness covering synth
 
 That is an engineering validation result — not a claim that every real-world payment case will recover successfully.
 
+### Money-path evidence
+
+The current build already validates the **financial state machine** in test mode. We show the exact monetary path we can substantiate today rather than inventing a production recovery percentage.
+
+<p align="center">
+  <img src="./public/assets/recoverit-money-evidence.svg" alt="RecoverIT money-path validation" width="100%" />
+</p>
+
+| Evidence | Observed result |
+|---|---|
+| **Razorpay test payment** | ₹100 captured successfully in test mode |
+| **Refund lifecycle** | ₹500 synthetic refund progressed from `REFUND_INITIATED` to `REFUND_PROCESSED` |
+| **Monitoring** | refund monitor was active while the refund was being tracked |
+| **Outcome guard** | provider processing did not automatically mark the case resolved before customer receipt |
+| **External-loop validation** | **6/6 checks passed** |
+| **Recovery-suite validation** | **25/25 checks passed** |
+| **Eligible route coverage** | **13 eligible routes** discovered in the recovery suite |
+
+> **Read this correctly:** the ₹500 and ₹100 figures are **test-mode / synthetic validation amounts**. They prove that RecoverIT can track, reconcile and gate a money-recovery workflow; they are **not claims of real customer funds recovered**.
+
 ### The metrics to earn next
 
 ```text
@@ -269,12 +287,16 @@ evidence verification accuracy
       ↓
 workflow completion rate
       ↓
-successful recovery rate
+eligible recovery rate
       ↓
-amount recovered
+₹ at risk → ₹ recovered
       ↓
 abstention / exception rate
+      ↓
+unsafe actions prevented
 ```
+
+The next business-grade benchmark is a reproducible batch with labeled outcomes so the repository can publish **cases processed, ₹ at risk, ₹ recovered, recovery rate, route accuracy, abstentions, escalations and unsafe-action count**.
 
 [Evaluation methodology →](./public/docs/EVALUATION.md)
 

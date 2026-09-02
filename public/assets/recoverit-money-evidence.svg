@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" role="img" aria-labelledby="t d">
+<title id="t">RecoverIT monetary workflow evidence</title>
+<desc id="d">Synthetic validation evidence showing a payment path moving from captured payment to refund initiated, monitored, processed, and outcome-gated.</desc>
+<defs>
+  <linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#111719"/><stop offset="1" stop-color="#0d1315"/></linearGradient>
+  <filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<rect width="1200" height="420" rx="28" fill="#080a0c"/>
+<text x="55" y="55" fill="#b9f36b" font-family="monospace" font-size="14" letter-spacing="3">MONEY-PATH VALIDATION</text>
+<text x="55" y="92" fill="#f4f5f2" font-family="Arial, sans-serif" font-size="27" font-weight="700">The recovery engine tracks the money path — not just the conversation.</text>
+<g font-family="Arial, sans-serif">
+  <g transform="translate(55 145)">
+    <rect width="205" height="122" rx="20" fill="url(#g)" stroke="#38454a"/>
+    <text x="20" y="27" fill="#778488" font-family="monospace" font-size="11">PAYMENT</text>
+    <text x="20" y="63" fill="#f4f5f2" font-size="25" font-weight="700">₹100</text>
+    <text x="20" y="91" fill="#b9f36b" font-size="13">Razorpay test payment</text>
+    <text x="20" y="110" fill="#7f8a8c" font-size="11">captured</text>
+  </g>
+  <g transform="translate(295 145)">
+    <rect width="205" height="122" rx="20" fill="url(#g)" stroke="#38454a"/>
+    <text x="20" y="27" fill="#778488" font-family="monospace" font-size="11">CASE</text>
+    <text x="20" y="63" fill="#f4f5f2" font-size="25" font-weight="700">₹500</text>
+    <text x="20" y="91" fill="#f4f5f2" font-size="13">refund lifecycle</text>
+    <text x="20" y="110" fill="#7f8a8c" font-size="11">synthetic validation</text>
+  </g>
+  <g transform="translate(535 145)">
+    <rect width="205" height="122" rx="20" fill="url(#g)" stroke="#38454a"/>
+    <text x="20" y="27" fill="#778488" font-family="monospace" font-size="11">RECOVERY STATE</text>
+    <text x="20" y="63" fill="#f4f5f2" font-size="23" font-weight="700">REFUND_INITIATED</text>
+    <text x="20" y="92" fill="#b9f36b" font-size="13">reference RFD123456</text>
+    <text x="20" y="110" fill="#7f8a8c" font-size="11">monitor armed</text>
+  </g>
+  <g transform="translate(775 145)">
+    <rect width="205" height="122" rx="20" fill="#111a12" stroke="#b9f36b" stroke-width="2" filter="url(#glow)"/>
+    <text x="20" y="27" fill="#778488" font-family="monospace" font-size="11">RECOVERY STATE</text>
+    <text x="20" y="63" fill="#f4f5f2" font-size="23" font-weight="700">REFUND_PROCESSED</text>
+    <text x="20" y="92" fill="#b9f36b" font-size="13">response recorded</text>
+    <text x="20" y="110" fill="#7f8a8c" font-size="11">workflow still outcome-gated</text>
+  </g>
+  <path d="M260 206 H295 M500 206 H535 M740 206 H775" stroke="#66737a" stroke-width="2"/>
+  <g fill="#66737a"><path d="M285 199 l10 7 l-10 7"/><path d="M525 199 l10 7 l-10 7"/><path d="M765 199 l10 7 l-10 7"/></g>
+</g>
+<text x="55" y="320" fill="#778488" font-family="monospace" font-size="12">6/6 external-loop checks passed · no real organization contacted · synthetic/test-mode amounts</text>
+<text x="55" y="350" fill="#778488" font-family="monospace" font-size="12">Key invariant: provider processing does not automatically mark a case resolved before customer receipt is confirmed.</text>
+<text x="55" y="382" fill="#778488" font-family="monospace" font-size="12">Latest recovery-suite: 25/25 checks passed · Razorpay test-mode payment: ₹100 captured</text>
+</svg>
