@@ -1,8 +1,8 @@
 import { db } from 'hatchable';
 import { getCase } from 'lib/case.js';
-export const access='member'; export const methods=['POST'];
+export const access='user'; export const methods=['POST'];
 export default async function(req,res){
- const c=await getCase(req.body?.case_id,req.member.id); if(!c)return res.status(404).json({error:'Case not found.'});
+ const c=await getCase(req.body?.case_id,req.user.id); if(!c)return res.status(404).json({error:'Case not found.'});
  const run=await db.query('INSERT INTO reconciliation_runs (case_id,user_id,source,status) VALUES ($1,$2,$3,$4) RETURNING id',[c.id,req.member.id,'connected_financial_sources','RUNNING']);
  const reference=String(c.transaction_reference||'').trim(); const amount=Number(c.amount||0); const merchant=String(c.merchant_name||'').toLowerCase();
  const tx=await db.query('SELECT * FROM financial_transactions WHERE user_id=$1 AND (case_id=$2 OR ($3<>\'\' AND (reference=$3 OR external_transaction_id=$3))) ORDER BY transaction_at DESC NULLS LAST LIMIT 50',[req.member.id,c.id,reference]);

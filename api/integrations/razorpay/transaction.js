@@ -1,9 +1,9 @@
 import { db } from 'hatchable';
 import { getCase } from 'lib/case.js';
 import { razorpayRequest, canonicalPaymentState } from 'lib/integrations.js';
-export const access='member'; export const methods=['POST'];
+export const access='user'; export const methods=['POST'];
 export default async function(req,res){
- const c=await getCase(req.body?.case_id,req.member.id); if(!c)return res.status(404).json({error:'Case not found.'});
+ const c=await getCase(req.body?.case_id,req.user.id); if(!c)return res.status(404).json({error:'Case not found.'});
  const paymentId=String(req.body?.payment_id||c.transaction_reference||'').trim(); if(!paymentId)return res.status(400).json({error:'A Razorpay payment ID is required.'});
  const out=await razorpayRequest('GET',`/payments/${encodeURIComponent(paymentId)}`); if(!out.configured)return res.status(503).json(out); if(!out.ok)return res.status(out.status).json({error:'Razorpay request failed.',provider:out.data});
  const p=out.data;

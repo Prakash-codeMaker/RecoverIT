@@ -1,9 +1,9 @@
 import { db, email } from 'hatchable';
 import { getCase } from 'lib/case.js';
 import { sendTwilio } from 'lib/integrations.js';
-export const access='member'; export const methods=['POST'];
+export const access='user'; export const methods=['POST'];
 export default async function(req,res){
- const c=await getCase(req.body?.case_id,req.member.id); if(!c)return res.status(404).json({error:'Case not found.'});
+ const c=await getCase(req.body?.case_id,req.user.id); if(!c)return res.status(404).json({error:'Case not found.'});
  const destination=String(req.body?.destination||'').trim(),channel=String(req.body?.channel||'email').toLowerCase(); const approval=String(req.body?.approval_token||'').trim();
  if(approval!=='USER_APPROVED')return res.status(409).json({error:'Explicit user approval is required before an escalation is delivered.'});
  const prep=await db.query('SELECT * FROM escalation_preparations WHERE case_id=$1 ORDER BY created_at DESC LIMIT 1',[c.id]);if(!prep.rows[0])return res.status(404).json({error:'Prepare the escalation first.'});

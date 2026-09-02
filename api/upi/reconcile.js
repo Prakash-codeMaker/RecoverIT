@@ -1,8 +1,8 @@
 import { db } from 'hatchable';
 import { getCase } from 'lib/case.js';
-export const access='member'; export const methods=['POST'];
+export const access='user'; export const methods=['POST'];
 export default async function(req,res){
- const c=await getCase(req.body?.case_id,req.member.id); if(!c)return res.status(404).json({error:'Case not found.'});
+ const c=await getCase(req.body?.case_id,req.user.id); if(!c)return res.status(404).json({error:'Case not found.'});
  const reference=String(req.body?.upi_reference||c.transaction_reference||'').trim(); if(!reference)return res.status(400).json({error:'UPI reference/UTR is required.'});
  const rows=await db.query('SELECT * FROM financial_transactions WHERE user_id=$1 AND (reference=$2 OR external_transaction_id=$2) ORDER BY transaction_at DESC LIMIT 20',[req.member.id,reference]);
  const providerEvents=await db.query('SELECT provider,event_type,canonical_state,payload_json,received_at FROM provider_events WHERE payload_json::text ILIKE $1 ORDER BY received_at DESC LIMIT 20',['%'+reference+'%']);

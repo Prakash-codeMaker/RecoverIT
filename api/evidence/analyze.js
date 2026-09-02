@@ -1,9 +1,9 @@
 import { db, storage } from 'hatchable';
 import { getCase } from 'lib/case.js';
 import { googleVisionDocument, extractGeminiText } from 'lib/integrations.js';
-export const access='member'; export const methods=['POST'];
+export const access='user'; export const methods=['POST'];
 export default async function(req,res){
- const c=await getCase(req.body?.case_id,req.member.id); if(!c)return res.status(404).json({error:'Case not found.'});
+ const c=await getCase(req.body?.case_id,req.user.id); if(!c)return res.status(404).json({error:'Case not found.'});
  const evidenceId=String(req.body?.evidence_id||'').trim(); if(!evidenceId)return res.status(400).json({error:'evidence_id is required.'});
  const er=await db.query('SELECT * FROM evidence WHERE id=$1 AND case_id=$2 AND user_id=$3',[evidenceId,c.id,req.member.id]); const e=er.rows[0]; if(!e)return res.status(404).json({error:'Evidence not found.'});
  const existing=await db.query('SELECT * FROM evidence_analysis WHERE evidence_id=$1 AND analysis_type=$2',[evidenceId,'document_understanding']); if(existing.rows[0]?.status==='COMPLETED')return res.json(existing.rows[0]);

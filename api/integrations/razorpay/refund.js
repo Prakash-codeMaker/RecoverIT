@@ -1,9 +1,9 @@
 import { db } from 'hatchable';
 import { getCase } from 'lib/case.js';
 import { razorpayRequest } from 'lib/integrations.js';
-export const access='member'; export const methods=['POST'];
+export const access='user'; export const methods=['POST'];
 export default async function(req,res){
- const c=await getCase(req.body?.case_id,req.member.id); if(!c)return res.status(404).json({error:'Case not found.'});
+ const c=await getCase(req.body?.case_id,req.user.id); if(!c)return res.status(404).json({error:'Case not found.'});
  const paymentId=String(req.body?.payment_id||c.transaction_reference||'').trim(); if(!paymentId)return res.status(400).json({error:'A Razorpay payment ID is required.'});
  const amount=req.body?.amount==null?null:Number(req.body.amount); if(amount!==null&&(!Number.isFinite(amount)||amount<=0))return res.status(400).json({error:'Invalid refund amount.'});
  const approval=String(req.body?.approval_token||'').trim(); if(approval!=='USER_APPROVED')return res.status(409).json({error:'Explicit user approval is required. This endpoint never moves money from an AI-only recommendation.'});

@@ -1,9 +1,9 @@
 import { db, email } from 'hatchable';
 import { getCase } from 'lib/case.js';
 import { sendTwilio } from 'lib/integrations.js';
-export const access='member'; export const methods=['POST'];
+export const access='user'; export const methods=['POST'];
 export default async function(req,res){
- const c=await getCase(req.body?.case_id,req.member.id); if(!c)return res.status(404).json({error:'Case not found.'});
+ const c=await getCase(req.body?.case_id,req.user.id); if(!c)return res.status(404).json({error:'Case not found.'});
  const channel=String(req.body?.channel||'').toLowerCase(); const to=String(req.body?.to||'').trim(); const body=String(req.body?.body||'').trim(); if(!['email','sms','whatsapp'].includes(channel)||!to||!body)return res.status(400).json({error:'channel, destination and body are required.'});
  const ins=await db.query('INSERT INTO communication_messages (user_id,case_id,channel,direction,destination,provider,status,body) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id',[req.member.id,c.id,channel,'OUTBOUND',to,channel==='email'?'hatchable':'twilio','QUEUED',body]); const id=ins.rows[0].id;
  try{

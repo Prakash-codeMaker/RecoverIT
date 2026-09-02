@@ -133,3 +133,31 @@ write = "own"
 [db.tables.feedback]
 read = "own"
 write = "own"
+
+[db.tables.action_executions]
+read = "own"
+write = "own"
+
+[db.tables.communication_messages]
+read = "own"
+write = "own"
+
+[db.tables.escalation_deliveries]
+read = "own"
+write = "own"
+
+[db.tables.financial_transactions]
+read = "own"
+write = "own"
+
+[db.tables.integration_connections]
+read = "own"
+write = "own"
+
+[db.tables.outcome_training_examples]
+read = "own"
+write = "own"
+
+[db.tables.reconciliation_runs]
+read = "own"
+write = "own"
