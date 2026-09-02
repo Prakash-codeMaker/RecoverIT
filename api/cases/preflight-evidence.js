@@ -1,4 +1,4 @@
-import { db } from 'hatchable';
+import { db, storage } from 'hatchable';
 import { analyzeDocument } from 'lib/recoverit-ai.js';
 import { hashText } from 'lib/dispute.js';
 export const access='user'; export const methods=['POST'];
@@ -35,7 +35,8 @@ VERIFIED means the file is clearly relevant and materially supports the story wi
  const verdict=verdicts.includes('REJECT')?'REJECT':verdicts.includes('REVIEW')?'REVIEW':'VERIFIED';
  const summaries=results.map(x=>({filename:x.filename,verdict:x.verdict,relevance:x.relevance,summary:x.summary,extracted:x.extracted,matches:x.matches,contradictions:x.contradictions,missing_for_verification:x.missing_for_verification,authenticity_signals:x.authenticity_signals,confidence:x.confidence}));
  const message=verdict==='VERIFIED'?'The uploaded proof materially supports the payment story.':verdict==='REVIEW'?'The uploaded proof appears relevant, but some important facts still need manual review.':'The uploaded proof does not currently support the payment story strongly enough to create a verified case.';
- const fileHashes=[];for(const f of files){const hash=await crypto.subtle.digest('SHA-256',f.buffer);fileHashes.push(Array.from(new Uint8Array(hash)).map(x=>x.toString(16).padStart(2,'0')).join(''))}
- const pre=await db.query('INSERT INTO case_preflights (user_id,description_hash,verdict,result,file_hashes,expires_at) VALUES ($1,$2,$3,$4,$5,now()+interval \'15 minutes\') RETURNING id,expires_at',[req.user.id,hashText(description),verdict,JSON.stringify({message,files:summaries}),JSON.stringify(fileHashes)]);
+ const fileHashes=[];const staged=[];for(const f of files){const hash=await crypto.subtle.digest('SHA-256',f.buffer);const sha256=Array.from(new Uint8Array(hash)).map(x=>x.toString(16).padStart(2,'0')).join('');fileHashes.push(sha256);const ext=(String(f.filename||'bin').split('.').pop()||'bin').toLowerCase();const storageKey=`preflight/${req.user.id}/${crypto.randomUUID()}.${ext}`;await storage.put(storageKey,f.buffer,f.contentType);staged.push({filename:f.filename,content_type:f.contentType,bytes:f.buffer.length,storage_key:storageKey,sha256})}
+ const enrichedFiles=summaries.map((s,i)=>({...s,storage_key:staged[i].storage_key,sha256:staged[i].sha256,bytes:staged[i].bytes,content_type:staged[i].content_type}));
+ const pre=await db.query('INSERT INTO case_preflights (user_id,description_hash,verdict,result,file_hashes,expires_at) VALUES ($1,$2,$3,$4,$5,now()+interval \'15 minutes\') RETURNING id,expires_at',[req.user.id,hashText(description),verdict,JSON.stringify({message,files:enrichedFiles}),JSON.stringify(fileHashes)]);
  res.json({ok:true,required:true,preflight_id:pre.rows[0].id,expires_at:pre.rows[0].expires_at,verdict,message,files:summaries,verification:{verified:verdict==='VERIFIED',review_required:verdict==='REVIEW',rejected:verdict==='REJECT'},next_action:verdict==='REJECT'?'Upload a clearer or relevant payment proof and try again.':verdict==='REVIEW'?'Review the evidence findings and explicitly approve creation for manual review.':'Create the case; RecoverIT will persist the evidence analysis and continue provider reconciliation.'});
 }

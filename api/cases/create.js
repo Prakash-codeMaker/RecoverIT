@@ -1,4 +1,4 @@
-import { db } from 'hatchable';
+import { db, storage } from 'hatchable';
 import { newCaseNumber, normalizeIssue, addEvent, addStep } from 'lib/case.js';
 import { scheduler } from 'hatchable';
 import { hashText } from 'lib/dispute.js';
@@ -14,8 +14,17 @@ export default async function(req,res){
  const pre=await db.query('SELECT id,verdict,result,file_hashes,expires_at,consumed_at FROM case_preflights WHERE id=$1 AND user_id=$2',[preflightId,u.id]);const pf=pre.rows[0];if(!pf)return res.status(400).json({error:'Proof verification could not be found. Please upload and verify the document again.'});if(pf.consumed_at||new Date(pf.expires_at)<=new Date())return res.status(400).json({error:'Proof verification expired. Please verify the document again.'});if(!['VERIFIED','REVIEW'].includes(pf.verdict))return res.status(400).json({error:'The uploaded proof was not accepted as relevant evidence.',code:'PROOF_REJECTED'});if(pf.verdict==='REVIEW'&&b.review_approved!=='true')return res.status(409).json({error:'The proof needs review. Approve creation for manual evidence review to continue.',code:'PROOF_REVIEW_REQUIRED'});
  const profile=await db.query('SELECT email,email_verified_at FROM users WHERE id=$1',[u.id]); const identityStatus=profile.rows[0]?.email_verified_at?'VERIFIED_ACCOUNT':'EMAIL_VERIFICATION_REQUIRED';
  const caseNo=newCaseNumber(); const r=await db.query('INSERT INTO recovery_cases (case_number,user_id,issue_type,description,amount,currency,merchant_name,transaction_reference,payment_method,status,priority,confidence_score,identity_status,identity_verified_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id,case_number,status,created_at,identity_status',[caseNo,u.id,issue,description,amount,'INR',null,ref,method,'REPORTED',amount>=50000?'HIGH':'NORMAL',null,identityStatus,identityStatus==='VERIFIED_ACCOUNT'?new Date().toISOString():null]);
- const c=r.rows[0]; await db.query('UPDATE case_preflights SET consumed_at=now() WHERE id=$1',[preflightId]);
+ const c=r.rows[0];
  const pfResult=pf.result&&typeof pf.result==='object'?pf.result:{}; const filesResult=Array.isArray(pfResult.files)?pfResult.files:[]; const extracted=filesResult.map(f=>f.extracted||{});
+ if(!filesResult.length){await db.query('DELETE FROM recovery_cases WHERE id=$1',[c.id]);return res.status(500).json({error:'Verified proof was not staged. The case was not finalized.',code:'STAGED_EVIDENCE_MISSING'});}
+ for(const f of filesResult){
+  if(!f.storage_key||!f.sha256){await db.query('DELETE FROM recovery_cases WHERE id=$1',[c.id]);return res.status(500).json({error:'Verified proof metadata is incomplete. The case was not finalized.',code:'STAGED_EVIDENCE_INVALID'});}
+  const staged=await storage.get(f.storage_key);
+  if(!staged?.buffer){await db.query('DELETE FROM recovery_cases WHERE id=$1',[c.id]);return res.status(500).json({error:'Verified proof is no longer available. Please upload it again.',code:'STAGED_EVIDENCE_MISSING'});}
+  const ev=await db.query('INSERT INTO evidence (case_id,user_id,filename,content_type,bytes,storage_key,sha256) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id',[c.id,u.id,f.filename,f.content_type||staged.contentType||'application/octet-stream',Number(f.bytes||staged.buffer.length),f.storage_key,f.sha256]);
+  if(f.verdict){await db.query('INSERT INTO evidence_analysis (evidence_id,case_id,analysis_type,status,extracted_text,structured_data,authenticity_signals,confidence,model) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (evidence_id,analysis_type) DO UPDATE SET status=$4,extracted_text=$5,structured_data=$6,authenticity_signals=$7,confidence=$8,model=$9,updated_at=now()',[ev.rows[0].id,c.id,'document_understanding','COMPLETED',String(f.extracted_text||f.summary||''),f,Array.isArray(f.authenticity_signals)?f.authenticity_signals:[],Number.isFinite(Number(f.confidence))?Number(f.confidence):null,'preflight']);}
+ }
+ await db.query('UPDATE case_preflights SET consumed_at=now() WHERE id=$1',[preflightId]);
  const allText=[description,...filesResult.flatMap(f=>[f.summary,...Object.values(f.extracted||{})]),...filesResult.flatMap(f=>Array.isArray(f.matches)?f.matches:[])].filter(Boolean).join(' ');
  const bankAliases=[['sbi','state bank of india','sbi'],['hdfc','hdfc bank','hdfc'],['icici','icici bank','icici'],['axis','axis bank','axis'],['pnb','punjab national bank','pnb'],['bob','bank of baroda','bob'],['canara','canara bank','canara'],['union','union bank of india','union bank']]; const bank=bankAliases.find(([k,...a])=>a.some(v=>allText.toLowerCase().includes(v)));
  const app=[['google_pay_upi','google pay','gpay'],['phonepe_upi','phonepe'],['paytm_upi','paytm']].find(([k,...a])=>a.some(v=>allText.toLowerCase().includes(v)));
