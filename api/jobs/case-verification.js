@@ -1,11 +1,11 @@
-import { db } from 'hatchable';
+import { db, scheduler } from 'hatchable';
 import { verifyCaseEvidence } from 'lib/case-verification.js';
 export const access='scheduler';
 export const methods=['POST'];
 export const schedule='0 * * * *';
 
-const BATCH_SIZE=100;
-const CONCURRENCY=2;
+const BATCH_SIZE=20;
+const CONCURRENCY=4;
 
 async function loadCandidates(priorityId){
  const priority=[];
@@ -49,5 +49,7 @@ export default async function(req,res){
  const all=await loadCandidates(priorityId);
  const trigger=priorityId?'evidence_uploaded':'scheduled_global';
  const results=await processAll(all,trigger);
- res.json({ok:true,scope:'all_users_all_active_cases',checked:all.length,concurrency:CONCURRENCY,batch_size:BATCH_SIZE,results});
+ const continued=all.length>=BATCH_SIZE;
+ if(continued){try{await scheduler.at(new Date(Date.now()+1200).toISOString(),'/api/jobs/case-verification',{payload:{}})}catch(_){/* hourly schedule remains the safety net */}}
+ res.json({ok:true,scope:'all_users_all_active_cases',checked:all.length,concurrency:CONCURRENCY,batch_size:BATCH_SIZE,continued,results});
 }

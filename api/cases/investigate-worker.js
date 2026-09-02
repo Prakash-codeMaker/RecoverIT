@@ -156,7 +156,8 @@ export default async function(req,res){
     const providerState=provider[0]?.canonical_state||null;
     const message=needsEvidence ? 'We captured your story, but we cannot verify the request yet. Upload a receipt, statement, transaction screenshot, provider message, or provide the UTR/RRN/transaction reference. RecoverIT will continue automatically once we have a verifiable signal.' : missingReference ? 'We reviewed the available information, but provider reconciliation needs the UTR/RRN/transaction reference or provider response. Add it and RecoverIT will continue automatically.' : providerState ? `RecoverIT found a provider-side state (${providerState}) but the AI reasoning service is unavailable. The provider signal has not been turned into a final conclusion yet; monitoring continues automatically.` : 'RecoverIT is checking the available evidence and provider trail. The AI reasoning service is temporarily unavailable, so no unsupported payment state has been assumed.';
     const nextSteps=needsEvidence ? ['Upload the proof needed for this case or provide the UTR/RRN/transaction reference.','Add a provider or merchant response when it becomes available.'] : [message];
-    await db.query('UPDATE recovery_cases SET status=$1,ai_status=$2,ai_summary=$3,ai_findings=$4::jsonb,ai_next_steps=$5::jsonb,ai_confidence=NULL,confidence_score=NULL,updated_at=now() WHERE id=$6',[needsEvidence?'WAITING_FOR_USER':'INVESTIGATING','UNAVAILABLE',message,JSON.stringify([{text:'The reported ₹500 request has not been independently verified.',status:'reported'},{text:'RecoverIT will not label the charge valid or invalid without supporting evidence.',status:'unknown'}]),JSON.stringify(nextSteps),c.id]);
+    const caseAmount=c.amount!=null?`${c.currency||'INR'} ${c.amount}`:'the reported payment';
+    await db.query('UPDATE recovery_cases SET status=$1,ai_status=$2,ai_summary=$3,ai_findings=$4::jsonb,ai_next_steps=$5::jsonb,ai_confidence=NULL,confidence_score=NULL,updated_at=now() WHERE id=$6',[needsEvidence?'WAITING_FOR_USER':'INVESTIGATING','UNAVAILABLE',message,JSON.stringify([{text:`The ${caseAmount} payment request has not been independently verified.`,status:'reported'},{text:'RecoverIT will not label the charge valid or invalid without supporting evidence.',status:'unknown'}]),JSON.stringify(nextSteps),c.id]);
     await setStep(c.id,key,needsEvidence?'DONE':'RUNNING',message);
     await addEvent(c.id,needsEvidence?'Evidence needed':'AI retry scheduled',message,needsEvidence?'WAITING_FOR_USER':'INVESTIGATING','RecoverIT');
     await notify(c.user_id,c.id,needsEvidence?'Proof needed to verify the ₹500 request':'Investigation retry scheduled',message);
@@ -185,10 +186,8 @@ export default async function(req,res){
   await setStep(c.id,key,'DONE',summary);
   await addEvent(c.id,'Investigation pass complete',summary,'INVESTIGATING','RecoverIT AI',confidence);
 
-  // One AI call now completes the full reasoning pass. Do not make the user wait through four serial model calls.
-  if(key==='payment'){
-    for(const [stepKey] of STEPS.slice(1)) await setStep(c.id,stepKey,'DONE',summary);
-  }
+  // Each investigation stage is persisted independently. A completed payment pass
+  // must not claim that timeline/provider/recovery-plan work is already complete.
 
   const aiNeedsUser=Boolean(result.needs_user) || (!String(c.transaction_reference||'').trim() && evidence.length===0);
   if(aiNeedsUser){

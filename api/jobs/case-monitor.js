@@ -53,7 +53,6 @@ export default async function(req,res){
   let queued=0;
   for(const row of active.rows){
     let resolution=null;try{resolution=await syncResolutionState(row.id)}catch(_){/* resolution state must never block case monitoring */}
-    try{await rebuildCaseBrain(row.id,row.user_id)}catch(_){/* case brain is derived state; monitoring continues safely */}
     try{await rebuildCaseBrain(row.id,row.user_id)}catch(_){/* Case Brain refresh is best-effort and never blocks monitoring */}
     if(row.identity_status==='VERIFIED_ACCOUNT'){
       try{

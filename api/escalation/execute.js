@@ -8,7 +8,7 @@ export default async function(req,res){
  if(approval!=='USER_APPROVED')return res.status(409).json({error:'Explicit user approval is required before an escalation is delivered.'});
  const prep=await db.query('SELECT * FROM escalation_preparations WHERE case_id=$1 ORDER BY created_at DESC LIMIT 1',[c.id]);if(!prep.rows[0])return res.status(404).json({error:'Prepare the escalation first.'});
  const complaint=prep.rows[0].complaint;
- const ins=await db.query('INSERT INTO escalation_deliveries (case_id,user_id,destination,channel,status,payload) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id',[c.id,req.member.id,destination,channel,'SENDING',JSON.stringify({complaint})]);
+ const ins=await db.query('INSERT INTO escalation_deliveries (case_id,user_id,destination,channel,status,payload) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id',[c.id,req.user.id,destination,channel,'SENDING',JSON.stringify({complaint})]);
  try{
   if(channel==='email'){await email.send({to:destination,subject:`RecoverIT escalation · ${c.case_number}`,html:`<div style="font-family:Arial,sans-serif;white-space:pre-wrap">${complaint.replace(/[&<>]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[x]))}</div>`});}
   else {const out=await sendTwilio(channel,destination,complaint);if(!out.ok)throw Error(out.error||'Communication provider unavailable.');}
