@@ -1,6 +1,6 @@
 import { db } from 'hatchable';
 import { razorpayRequest } from 'lib/integrations.js';
-export const access='user'; export const methods=['GET'];
+export const access='admin'; export const methods=['GET'];
 async function env(name){return Boolean(String(process.env[name]||'').trim())}
 export default async function(req,res){
  const providers={
