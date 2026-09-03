@@ -34,8 +34,11 @@ VERIFIED means the file is clearly relevant and materially supports the story wi
    const out=await analyzeDocument({mimeType:f._recoveritMime,bytes:f.buffer,prompt});
    const parsed=out?.data;
    if(!parsed)throw new Error('The evidence verifier returned invalid structured output.');
-   results.push({filename:f.filename,content_type:f.contentType,bytes:f.buffer.length,provider:out.provider,model:out.model,...parsed});
-  }catch(error){return res.status(502).json({error:'Could not verify the uploaded proof. The case was not created.',detail:String(error.message||error)})}
+   results.push({filename:f.filename,content_type:f._recoveritMime,bytes:f.buffer.length,provider:out.provider,model:out.model,...parsed});
+  }catch(error){
+   // Evidence upload must not depend on a synchronous AI response. Stage the file and let the case verifier retry in the background.
+   results.push({filename:f.filename,content_type:f._recoveritMime,bytes:f.buffer.length,provider:'unavailable',model:null,document_type:'other',relevance:'unclear',verdict:'REVIEW',summary:'Proof received. RecoverIT could not complete the automated check right now, so the case will continue verification in the background.',extracted:{},matches:[],contradictions:[],authenticity_signals:[],missing_for_verification:['Automated verification did not finish on this attempt.'],confidence:0,verification_error:String(error?.message||error).slice(0,300)});
+  }
  }
  const verdicts=results.map(x=>String(x.verdict||'REVIEW').toUpperCase());
  const verdict=verdicts.includes('REJECT')?'REJECT':verdicts.includes('REVIEW')?'REVIEW':'VERIFIED';
