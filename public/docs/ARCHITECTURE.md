@@ -1,120 +1,122 @@
 # RecoverIT architecture
 
-RecoverIT is a persistent orchestration layer for payment recovery. The central architectural decision is to separate **probabilistic interpretation** from **deterministic authority**.
+> **Probabilistic intelligence. Deterministic authority.**
 
-## System boundary
+<p align="center">
+  <img src="../assets/recoverit-agent-architecture.svg" alt="Animated RecoverIT architecture" width="100%" />
+</p>
+
+## One picture
 
 ```text
-Customer story + evidence
-          |
-          v
-   AI interpretation
-          |
-          v
- Persistent case + workflow ledger
-          |
-   +------+------+------+
-   |             |      |
-Evidence      Payment  Provider
-verification  context  intelligence
-   |             |      |
-   +------+------+------+
-          |
-          v
- Deterministic recovery policy
-          |
-          v
- User-approved external action
-          |
-          v
- Response / refund monitoring
-          |
-          v
-        Resolution
+CUSTOMER + EVIDENCE
+        ↓
+┌──────────────────────┐
+│   AI INTERPRETATION  │  ← understand / extract / classify
+└──────────┬───────────┘
+           ↓
+┌──────────────────────┐
+│   DURABLE CASE       │  ← facts + evidence + workflow
+│   + WORKFLOW LEDGER  │
+└──────────┬───────────┘
+           ↓
+┌──────────────────────┐
+│ DETERMINISTIC RULES  │  ← gates / route / approval
+└──────────┬───────────┘
+           ↓
+     EXTERNAL ACTION
+           ↓
+   PROVIDER RESPONSE
+           └──────────────→ CASE LOOP
 ```
 
-### Responsibilities
+## Three boundaries
 
-| Layer | Owns |
+| | Purpose |
 |---|---|
-| **Experience** | story input, evidence upload, case state, next action, approval UI |
-| **AI layer** | interpretation, extraction, classification, provider-response understanding, preparation |
-| **Case Brain** | structured synthesis of facts/evidence/next action |
-| **Workflow engine** | authoritative step, status, reason, next action and continuation |
-| **Policy/gates** | authorization, evidence gates, route legitimacy, idempotency and approval |
-| **Provider adapters** | Razorpay, bank/UPI and provider-specific routes |
-| **Workers** | verification retries, monitoring, follow-up and workflow reconciliation |
-| **Resolution** | outcome projection and confirmation |
+| **01 · AI** | Understand messy human and document inputs. |
+| **02 · Control plane** | Decide what is allowed and what happens next. |
+| **03 · Execution** | Perform only the approved, legitimate action. |
 
-## Core implementation
+### AI can
 
-`lib/case-workflow.js` is the central orchestration module. It loads the durable case state, evaluates the relevant gates, computes the authoritative next step and persists the workflow ledger.
+`interpret` · `extract` · `classify` · `find missing information` · `prepare`
 
-The workflow ledger includes:
+### AI cannot
 
-```text
-workflow_step
-workflow_next_action
-workflow_status
-workflow_reason
-workflow_last_trigger
-workflow_updated_at
-```
+`authorize` · `invent payment facts` · `choose an illegitimate destination` · `bypass evidence gates` · `send without approval` · `declare money recovered`
 
-`api/jobs/workflow-heartbeat.js` provides background continuation so active cases do not depend on an open browser.
-
-## AI boundary
-
-AI is deliberately not the system of record.
-
-AI may:
-
-- understand a payment story;
-- read a receipt, statement or screenshot;
-- extract candidate payment facts;
-- identify missing information;
-- classify an organization response;
-- prepare a route or message.
-
-Deterministic code decides:
-
-- whether the caller owns the case;
-- whether evidence satisfies the gate;
-- whether payment facts are consistent;
-- which destination/channel is legitimate;
-- whether the user explicitly approved the action;
-- whether a duplicate action already exists;
-- whether a provider response changes the workflow;
-- whether an outcome is actually confirmed.
-
-## Failure boundary
-
-A provider/model failure is converted into a recoverable workflow condition whenever possible.
+## Case as the system of record
 
 ```text
-provider timeout
-      ↓
-preserve evidence + case
-      ↓
-mark verification unavailable / retryable
-      ↓
-background retry / fallback provider
-      ↓
-reconcile workflow
+                  ┌───────────────┐
+                  │ RECOVERY CASE  │
+                  └───────┬───────┘
+          ┌───────────────┼───────────────┐
+          ↓               ↓               ↓
+       EVIDENCE        PAYMENT         PROVIDER
+       + ANALYSIS      CONTEXT        RESPONSES
+          └───────────────┼───────────────┘
+                          ↓
+                  WORKFLOW LEDGER
+                          ↓
+                  RECOVERY POLICY
+                          ↓
+                   USER APPROVAL
+                          ↓
+                  EXTERNAL ACTION
+                          ↓
+                     MONITORING
+                          └────→ CASE
 ```
 
-A clear evidence rejection remains a hard gate. A temporary verifier outage is not treated as proof rejection.
+## Failure path
 
-## Scaling boundary
+<p align="center">
+  <img src="../assets/recoverit-ai-boundary-animated.svg" alt="RecoverIT AI safety boundary" width="100%" />
+</p>
 
-The customer-facing case model stays stable as the execution layer grows. More volume can be handled by:
+```text
+MODEL / PROVIDER TIMEOUT
+          ↓
+    PRESERVE CASE
+          ↓
+  RETRY / FALLBACK
+          ↓
+  RECONCILE STATE
+          ↓
+CONTINUE ONLY IF GATES PASS
+```
 
-- batched verification workers;
-- provider-specific queues/adapters;
-- event-driven provider updates;
-- stronger observability and tracing;
-- horizontally scaled integrations;
-- expanded provider playbooks;
-- larger outcome datasets.
+A temporary AI outage becomes a recoverable workflow condition. A clear evidence rejection remains a hard gate.
 
-The durable workflow ledger is the source of progress, so scaling execution does not require moving state into an LLM transcript.
+## Scaling shape
+
+```text
+                 DURABLE CASE MODEL
+                         │
+        ┌────────────────┼────────────────┐
+        ↓                ↓                ↓
+   AI WORKERS      PROVIDER ADAPTERS   MONITORS
+        │                │                │
+        └────────────────┼────────────────┘
+                         ↓
+                  WORKFLOW LEDGER
+```
+
+Execution can scale independently while the case remains the stable source of progress.
+
+## Core code
+
+| Boundary | Implementation |
+|---|---|
+| Workflow | `lib/case-workflow.js` |
+| Evidence | `lib/case-verification.js` |
+| AI gateway | `lib/recoverit-ai.js` |
+| Case reasoning | `lib/case-brain.js` |
+| Recovery policy | `lib/dispute.js` |
+| Approval gate | `api/cases/dispute-send.js` |
+| Background work | `api/jobs/workflow-heartbeat.js` |
+| Integrations | `api/integrations/` |
+
+[Back to repository](../../README.md) · [Workflow](./WORKFLOW.md) · [Security](./SECURITY.md)

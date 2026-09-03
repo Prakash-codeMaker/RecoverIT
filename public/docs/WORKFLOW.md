@@ -1,88 +1,89 @@
 # RecoverIT workflow
 
-A RecoverIT case is a **durable process**, not a chat thread.
+> **A recovery case is a durable process — not a chat thread.**
+
+<p align="center">
+  <img src="../assets/recoverit-workflow-animated.svg" alt="Animated RecoverIT recovery workflow" width="100%" />
+</p>
+
+## The loop
 
 ```text
-REPORT
-  ↓
-VERIFY
-  ↓
-INVESTIGATE
-  ↓
-PREPARE RECOVERY
-  ↓
-USER APPROVAL
-  ↓
-EXTERNAL ACTION / GUIDED HANDOFF
-  ↓
-MONITOR
-  ↓
-RESOLVE / ESCALATE / REQUEST INPUT
+REPORT → VERIFY → INVESTIGATE → RECOVER → APPROVE → ACT → MONITOR
+                                                        ↘
+                                      RESOLVE ← RESPONSE / RETRY
 ```
 
-## State model
+The case always has a persisted **current step + next action + reason**.
 
-The workflow can stop at a safe boundary and resume later.
+## State map
 
-| State | Meaning |
+<p align="center">
+  <img src="../assets/recoverit-state-machine.svg" alt="RecoverIT case state machine" width="100%" />
+</p>
+
+### Safe waiting states
+
+| State | What happens |
 |---|---|
-| `IDENTITY` | establish the authenticated owner/case context |
-| `EVIDENCE` | collect and verify proof |
-| `WAITING_FOR_USER` | a specific document, fact or approval is needed |
-| `WAITING_FOR_AUTOMATION` | provider/model is unavailable; retry is armed |
-| `INVESTIGATION` | reconstruct facts and timeline |
-| `ROUTE` | determine a legitimate provider/recovery route |
-| `APPROVAL` | exact consequential action is prepared for user review |
-| `EXTERNAL_ACTION` | approved action is delivered or handed off |
-| `MONITORING` | wait for provider/customer outcome |
-| `RESOLVED` | outcome is confirmed |
+| `WAITING_FOR_USER` | Ask for the specific missing proof, fact or approval. |
+| `WAITING_FOR_AUTOMATION` | Preserve the case and retry verification/provider work. |
+| `MONITORING` | Wait for a provider, refund or customer outcome. |
 
-## Workflow ledger
+**Waiting is not failure.** It is an explicit workflow state.
 
-The case persists:
+## What persists
 
 ```text
-workflow_step
-workflow_next_action
-workflow_status
-workflow_reason
-workflow_last_trigger
-workflow_updated_at
+┌─────────────────────────────────────────────────────┐
+│ RECOVERY CASE                                       │
+│                                                     │
+│  STEP        → where the case is                    │
+│  NEXT ACTION → what can happen next                 │
+│  STATUS      → active / waiting / blocked / done    │
+│  REASON      → why it is here                       │
+│  TRIGGER     → what changed it                      │
+│  UPDATED     → when state last changed              │
+└─────────────────────────────────────────────────────┘
 ```
 
-This answers four critical questions without asking the model to reconstruct them:
+This means the browser can close, a model can time out, or a provider can reply hours later without losing the workflow.
 
-1. **Where is the case?**
-2. **What can happen next?**
-3. **Who/what is blocking progress?**
-4. **Why is the case in this state?**
+## One case, many interactions
 
-## Waiting is a first-class state
+```text
+Provider asks for a bank statement
+              ↓
+     same recovery case
+              ↓
+     requirement recorded
+              ↓
+      user uploads proof
+              ↓
+       verification runs
+              ↓
+     workflow continues
+```
 
-RecoverIT does not turn uncertainty into a fake answer.
-
-Examples:
-
-- evidence is missing → wait for the user;
-- evidence is rejected → request replacement proof;
-- provider is unavailable → preserve state and retry;
-- a response requests a bank statement → attach that exact requirement to the same case;
-- user has not approved contact → keep the action prepared but unsent.
-
-## Same-case continuity
-
-When an organization asks for more information, the response, requirement, replacement evidence and follow-up action remain attached to the same case.
-
-That prevents the common failure mode where every new support interaction becomes a disconnected ticket.
+No new ticket is required just because the situation changed.
 
 ## Background continuation
 
-Scheduled workers reconcile active cases for:
+```text
+VERIFY RETRIES ─┐
+PAYMENT MONITOR ─┤
+FOLLOW-UP ───────┼──→ WORKFLOW HEARTBEAT → CASE STATE
+RESOLUTION ──────┘
+```
 
-- evidence verification;
-- payment/refund monitoring;
-- dispute follow-up;
-- workflow heartbeat;
-- resolution synchronization.
+Background workers continue active cases without an open browser.
 
-The browser is an interface to the workflow, not the workflow itself.
+## Implementation
+
+- `lib/case-workflow.js` — authoritative orchestration
+- `api/cases/workflow-state.js` — current workflow state
+- `api/cases/workflow-advance.js` — controlled advancement
+- `api/jobs/workflow-heartbeat.js` — background continuation
+- `lib/dispute-automation.js` — follow-up scheduling
+
+[Back to repository](../../README.md) · [Architecture](./ARCHITECTURE.md) · [AI boundary](./AI-SAFETY.md)
