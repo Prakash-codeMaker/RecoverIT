@@ -1,57 +1,56 @@
-# RecoverIT judge demo
+# RecoverIT demo
 
-The strongest demo is one concrete case followed end-to-end.
+The strongest walkthrough is one real product journey rather than a slide deck.
 
-## Recommended 5-minute flow
+## Five-minute walkthrough
 
-### 0:00–0:30 — Problem
+### 0:00–0:30 — The problem
 
-Show the payment/refund problem in one sentence.
-
-Example:
+Start with one concrete payment incident:
 
 > “The merchant says the refund was processed, but the customer still does not have the money.”
 
-### 0:30–1:00 — Product thesis
+Show why the customer normally has to coordinate evidence across multiple systems.
 
-Show:
+### 0:30–1:00 — The product
+
+Show the complete loop:
 
 ```text
-story → evidence → verification → investigation → route → approval → monitoring → resolution
+story → evidence → verification → investigation → recovery → approval → monitoring → resolution
 ```
 
-Say the key line:
+Introduce the key architecture principle:
 
-> **AI interprets. Deterministic controls decide.**
+> **AI handles ambiguity. Deterministic software handles authority.**
 
 ### 1:00–3:00 — Working product
 
-Use the live payment checker and move into a case.
+Use the live product and show:
 
-Show:
-
-- natural-language story;
+- natural-language problem intake;
 - evidence upload;
 - verification state;
-- investigation/timeline;
+- payment/timeline reconstruction;
 - next action;
-- approval gate;
-- case continuation.
+- explicit approval gate;
+- persistent case state.
 
 ### 3:00–4:00 — Architecture
 
-Show the AI boundary and durable workflow.
-
-Point to:
+Show the relationship between:
 
 - `lib/recoverit-ai.js`;
 - `lib/case-brain.js`;
 - `lib/case-workflow.js`;
+- `lib/dispute.js`;
 - `api/cases/dispute-send.js`.
 
-### 4:00–4:40 — What broke
+Explain that the model interprets while deterministic code controls authority.
 
-Explain the evidence-verification timeout problem and the fix:
+### 4:00–4:40 — Failure recovery
+
+Explain the verification-timeout incident:
 
 ```text
 synchronous verifier failure
@@ -60,24 +59,24 @@ case creation broke
         ↓
 separate evidence staging from authorization
         ↓
-preserve case + retry verification
+preserve case + retry/failover
         ↓
-fail closed until verified
+remain blocked until verified
 ```
 
-### 4:40–5:00 — Proof
+### 4:40–5:00 — Evidence
 
-Show the latest validation evidence:
+Show:
 
-- 21/21 E2E checks passed;
-- 13 eligible synthetic routes;
-- connected Razorpay test-mode probe;
-- no fabricated production recovery percentage.
+- 21/21 latest E2E checks;
+- 13 eligible synthetic recovery routes;
+- test-mode provider probe;
+- current limitations.
 
 ## Test Mode
 
 After signing in, `/test-mode.html` provides a synthetic protected scenario. It does not contact a real organization.
 
-## Demo rule
+## Demo principle
 
-Prefer a working product interaction over a slide-heavy explanation. The architecture and repository are there for the reviewer who wants to go deeper.
+Spend most of the time showing the product working. Use the repository and technical documentation to make the deeper engineering inspectable afterward.

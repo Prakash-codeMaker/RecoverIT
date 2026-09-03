@@ -1,12 +1,12 @@
 # RecoverIT product
 
-RecoverIT is a payment-recovery product built around a durable case.
+RecoverIT is a payment-resolution product built around a durable recovery case.
 
-## The customer promise
+## Customer promise
 
-A customer should not have to repeatedly explain the same payment problem to different systems.
+A customer should not have to explain the same payment problem repeatedly to different systems.
 
-RecoverIT keeps the case together:
+RecoverIT keeps together:
 
 ```text
 story
@@ -25,26 +25,26 @@ story
 REPORT → VERIFY → INVESTIGATE → RECOVER → APPROVE → MONITOR → RESOLVE
 ```
 
-## What makes it different
+## What makes the product different
 
-A conventional support assistant can summarize the problem or draft a message. RecoverIT goes further by maintaining a durable workflow with explicit gates and background continuation.
+A support assistant can summarize an incident or draft a message. RecoverIT maintains the incident as an executable, durable workflow.
 
-The product is designed around four principles:
+The product is built around four principles:
 
 1. **Evidence before authority** — important actions require the relevant proof.
-2. **AI for ambiguity** — use models where unstructured information needs interpretation.
-3. **Deterministic control for money** — exact financial facts and authorization are application state.
-4. **Resolution over conversation** — success is an outcome, not a completed chat.
+2. **AI for ambiguity** — models interpret unstructured information.
+3. **Deterministic control for money** — exact financial facts and authorization live in application state.
+4. **Resolution over conversation** — a completed chat is not a resolved payment.
 
-## Target problem families
+## Problem families
 
 - payment failed but money was deducted;
 - refund not received;
 - duplicate payment;
 - payment stuck;
 - unrecognized payment;
-- broader merchant/provider reconciliation problems.
+- merchant/provider reconciliation problems.
 
 ## Product boundary
 
-RecoverIT does not promise that every payment can be recovered. It promises to make the next legitimate, evidence-backed step clearer and safer, and to keep the case moving when the system has enough information to continue.
+RecoverIT does not promise that every payment can be recovered. It makes the next legitimate, evidence-backed step clearer, safer and persistent, then keeps the case moving when the necessary information becomes available.
