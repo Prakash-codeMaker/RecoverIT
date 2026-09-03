@@ -19,7 +19,7 @@ export default async function(req,res){
  const next=verification?.result==='VERIFIED'
   ? 'Evidence is verified. RecoverIT can now use the verified facts for the provider/dispute workflow.'
   : verification?.result==='REVIEW'
-   ? 'The evidence needs review. RecoverIT will keep checking and will not treat uncertain evidence as verified.'
+   ? 'Proof received. RecoverIT is checking it now. You do not need to upload anything else unless RecoverIT asks.'
    : verification?.result==='REJECTED'
     ? 'The attached evidence does not currently support the case. Add relevant payment proof to continue.'
     : 'RecoverIT could not complete automated verification right now. The case remains open and the verifier will retry automatically.';
