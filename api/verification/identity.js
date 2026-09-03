@@ -1,4 +1,5 @@
 import { db } from 'hatchable';
+import { notifyUser } from 'lib/user-notifications.js';
 
 export const access='user';
 export const methods=['POST'];
@@ -31,7 +32,7 @@ export default async function(req,res){
 
   await db.query('UPDATE recovery_cases SET identity_status=$1,identity_verified_at=now(),updated_at=now() WHERE id=$2',['VERIFIED_ACCOUNT',caseId]);
   await db.query('INSERT INTO case_events (case_id,event_type,title,detail,state,source) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING',[caseId,'IDENTITY_VERIFIED','User details verified','RecoverIT verified the signed-in account email before continuing the recovery investigation.','INVESTIGATING','RecoverIT']);
-  await db.query('INSERT INTO notifications (user_id,case_id,type,title,description) SELECT $1,$2,$3,$4,$5 WHERE NOT EXISTS (SELECT 1 FROM notifications WHERE case_id=$2 AND type=$3 AND title=$4 AND created_at > now() - interval \'30 minutes\')',[req.user.id,caseId,'case_update','Identity verified','Your signed-in account was verified. RecoverIT can continue investigating this case.']);
+  await notifyUser({userId:req.user.id,caseId,type:'case_update',title:'Identity verified',description:'Your signed-in account was verified. RecoverIT can continue investigating this case.'});
 
   res.json({verified:true,status:'VERIFIED_ACCOUNT',email:user.email,name:user.name||null,message:'Your account details are verified.'});
 }

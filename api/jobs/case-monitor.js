@@ -36,7 +36,7 @@ async function notifyUser(row,title,description,sendEmail=true){
 
 async function sendAttentionEmail(row){
   if(!row.email)return;
-  const recent=await db.query('SELECT id FROM notifications WHERE user_id=$1 AND case_id=$2 AND type=$3 AND created_at>now()-interval \'24 hours\' LIMIT 1',[row.user_id,row.id,'case_attention']);
+  const recent=await db.query('SELECT id FROM notifications WHERE user_id=$1 AND case_id=$2 AND created_at>now()-interval \'24 hours\' LIMIT 1',[row.user_id,row.id]);
   if(recent.rows[0])return;
   const title='Your RecoverIT case needs attention';
   const description='RecoverIT has reached a point where your case needs information or an action from you. Open the case to see exactly what is required.';
@@ -62,7 +62,8 @@ export default async function(req,res){
         if(String(fullCase?.verification_state||'').toUpperCase()==='VERIFIED') await prepareFirstDisputeAction(fullCase,row.user_id);
       }catch(_){/* automatic route preparation is best-effort and never blocks monitoring */}
     }
-    await sendCaseUpdate(row);
+    // Do not email on every updated_at write. Meaningful workflow events call the
+    // centralized notifier directly, which applies a per-event quiet window.
     if(row.status==='WAITING_FOR_USER') await sendAttentionEmail(row);
     if(row.identity_status!=='VERIFIED_ACCOUNT') continue;
     if(row.status==='WAITING_FOR_USER' && !String(row.transaction_reference||'').trim()) continue;

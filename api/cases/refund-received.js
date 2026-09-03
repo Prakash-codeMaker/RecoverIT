@@ -1,5 +1,6 @@
 import { db } from 'hatchable';
 import { getCase } from 'lib/case.js';
+import { notifyUser } from 'lib/user-notifications.js';
 export const access='user'; export const methods=['POST'];
 export default async function(req,res){
  const c=await getCase(req.body?.case_id,req.user.id);if(!c)return res.status(404).json({error:'Case not found.'});
@@ -11,6 +12,6 @@ export default async function(req,res){
  await db.query("UPDATE dispute_state SET phase='RESOLVED',waiting_for_user=false,resolution_status='RESOLVED',next_action='Refund received and confirmed by you.',next_action_at=now(),updated_at=now() WHERE case_id=$1",[c.id]);
  await db.query("UPDATE recovery_cases SET status='RESOLVED',resolved_at=now(),updated_at=now() WHERE id=$1",[c.id]);
  await db.query('INSERT INTO case_events (case_id,event_type,title,detail,state,source) VALUES ($1,$2,$3,$4,$5,$6)',[c.id,'REFUND_RECEIVED','Refund received',note,'RESOLVED','user']);
- await db.query('INSERT INTO notifications (user_id,case_id,type,title,description) VALUES ($1,$2,$3,$4,$5)',[req.user.id,c.id,'case_update','Refund received','You confirmed that the refunded money has reached your original payment account. RecoverIT has closed the case.']);
+ await notifyUser({userId:req.user.id,caseId:c.id,type:'case_update',title:'Refund received',description:'You confirmed that the refunded money has reached your original payment account. RecoverIT has closed the case.'});
  res.json({ok:true,status:'REFUND_RECEIVED',message:'Refund receipt recorded and the case is now resolved.'});
 }

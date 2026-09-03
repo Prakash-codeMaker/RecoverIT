@@ -3,6 +3,7 @@ import { newCaseNumber, normalizeIssue, addEvent, addStep } from 'lib/case.js';
 import { scheduler } from 'hatchable';
 import { hashText } from 'lib/dispute.js';
 import { advanceCaseWorkflow } from 'lib/case-workflow.js';
+import { notifyUser } from 'lib/user-notifications.js';
 export const access='user'; export const methods=['POST'];
 export default async function(req,res){
  const u=req.user; const b=req.body||{}; const description=String(b.description||'').trim();
@@ -32,10 +33,10 @@ export default async function(req,res){
  const paymentContext={payment_rail:method==='UPI'?'UPI':method,upi_provider_key:app?.[0]||null,upi_app:app?app[0].replaceAll('_',' '):null,payer_bank_key:bank?.[0]||null,payer_bank:bank?.[1]||null,merchant_name:extracted.find(x=>x.merchant)?.merchant||null,confidence:(bank?35:0)+(app?35:0)+(method==='UPI'?20:0),context_source:'PRE_CLAIM_EVIDENCE'};
  await db.query('INSERT INTO case_payment_context (case_id,user_id,payment_rail,upi_app,upi_provider_key,payer_bank,payer_bank_key,merchant_name,context_source,confidence,needs_user_confirmation,raw_evidence) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) ON CONFLICT (case_id) DO UPDATE SET payment_rail=$3,upi_app=$4,upi_provider_key=$5,payer_bank=$6,payer_bank_key=$7,merchant_name=$8,context_source=$9,confidence=$10,needs_user_confirmation=$11,raw_evidence=$12,updated_at=now()',[c.id,u.id,paymentContext.payment_rail,paymentContext.upi_app,paymentContext.upi_provider_key,paymentContext.payer_bank,paymentContext.payer_bank_key,paymentContext.merchant_name,paymentContext.context_source,paymentContext.confidence,paymentContext.confidence<70,JSON.stringify({preflight_id:preflightId,files:filesResult})]);
  await addEvent(c.id,'Payment context extracted','RecoverIT identified the payment rail and any bank/UPI provider signals visible in the submitted proof.','REPORTED','RecoverIT'); await addEvent(c.id,'Case received','Your story was captured. RecoverIT will now reconstruct what happened rather than making you complete a conventional form.','REPORTED','user');
- if(identityStatus!=='VERIFIED_ACCOUNT') await db.query('INSERT INTO notifications (user_id,case_id,type,title,description) VALUES ($1,$2,$3,$4,$5)',[u.id,c.id,'case_update','Verify your account details','RecoverIT needs your signed-in email to be verified before it can treat the case identity as verified.']);
+ if(identityStatus!=='VERIFIED_ACCOUNT') await notifyUser({userId:u.id,caseId:c.id,type:'case_attention',title:'Verify your account details',description:'RecoverIT needs your signed-in email to be verified before it can treat the case identity as verified. Once verified, the investigation can continue automatically.'});
  else await addEvent(c.id,'Identity verified','RecoverIT verified the signed-in account email before continuing the investigation.','REPORTED','RecoverIT');
  await addStep(c.id,'understanding','Understanding your report','DONE','Story captured from voice/text.'); await addStep(c.id,'payment','Checking payment information','RUNNING'); await addStep(c.id,'timeline','Reconstructing payment timeline','PENDING'); await addStep(c.id,'provider','Checking provider status','PENDING'); await addStep(c.id,'safe_path','Determining safest next step','PENDING');
- await db.query('INSERT INTO notifications (user_id,case_id,type,title,description) VALUES ($1,$2,$3,$4,$5)',[u.id,c.id,'case_update','Investigation started',`RecoverIT created ${caseNo} and is beginning the evidence-aware investigation.`]);
+ await notifyUser({userId:u.id,caseId:c.id,type:'case_update',title:'Investigation started',description:`RecoverIT created ${caseNo} and is beginning the evidence-aware investigation.`});
  try{await advanceCaseWorkflow(c.id,u.id,'case_created')}catch(_){try{await scheduler.now('/api/jobs/case-verification',{case_id:c.id,user_id:u.id})}catch(_2){/* global workflow heartbeat remains the safety net */}}
  res.status(201).json(c);
 }
