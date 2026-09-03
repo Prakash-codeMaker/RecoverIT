@@ -1,5 +1,3 @@
-[![Deploy to Hatchable](https://hatchable.com/deploy-button.svg)](https://hatchable.com/deploy?repo=https://github.com/Prakash-codeMaker/RecoverIT)
-
 # RecoverIT
 
 <p align="center">
@@ -116,33 +114,17 @@ See [`AI-SAFETY.md`](./public/docs/AI-SAFETY.md).
 
 A case is persisted as a state machine rather than reconstructed from conversation history.
 
-```mermaid
-stateDiagram-v2
-    [*] --> Evidence
-    Evidence --> Investigation: verified
-    Evidence --> WaitingForUser: missing / rejected
-    Evidence --> WaitingForAutomation: verifier unavailable
-    WaitingForUser --> Evidence: new evidence
-    WaitingForAutomation --> Evidence: retry succeeds
-    Investigation --> Route: facts complete
-    Investigation --> WaitingForUser: missing input
-    Route --> Approval: route ready
-    Approval --> ExternalAction: user approves
-    ExternalAction --> Monitoring: sent / handed off
-    Monitoring --> Investigation: new response
-    Monitoring --> WaitingForUser: more evidence
-    Monitoring --> Resolved: outcome confirmed
-```
+<p align="center">
+  <img src="./public/assets/recoverit-workflow-animated.svg" alt="Animated RecoverIT durable workflow showing verification, recovery, approval, monitoring and resolution" width="100%" />
+</p>
 
-The workflow ledger stores the authoritative:
+The loop is simple to read: **evidence can wait, verification can retry, provider responses can return later, and resolution is only reached when the outcome is supported.**
 
 ```text
-step · next action · status · reason · last trigger · updated time
+CASE STATE → NEXT ACTION → REASON → TRIGGER → CONTINUE
 ```
 
-Background workers can therefore continue verification, payment monitoring, follow-up and resolution without an open browser.
-
-See [`WORKFLOW.md`](./public/docs/WORKFLOW.md).
+Background workers keep the case moving without an open browser. See [`WORKFLOW.md`](./public/docs/WORKFLOW.md) for the full state machine and transitions.
 
 ---
 
@@ -196,19 +178,16 @@ See [`RELIABILITY.md`](./public/docs/RELIABILITY.md).
 
 ## Architecture at a glance
 
-```mermaid
-flowchart LR
-    U[Story + evidence] --> C[Durable case]
-    C --> B[Case Brain]
-    B --> AI[AI interpretation]
-    AI --> W[Workflow ledger]
-    W --> G[Deterministic gates]
-    G --> R[Recovery route]
-    R --> A[User approval]
-    A --> X[External action]
-    X --> M[Monitoring + provider response]
-    M --> W
-    W --> O[Resolution / escalation]
+<p align="center">
+  <img src="./public/assets/recoverit-agent-architecture.svg" alt="Animated RecoverIT architecture separating AI interpretation, deterministic controls and external actions" width="100%" />
+</p>
+
+The architecture has three clear boundaries:
+
+```text
+AI INTERPRETATION  →  DETERMINISTIC CONTROL PLANE  →  EXTERNAL ACTION
+ stories/evidence      identity · evidence · route      approved handoff
+ facts/responses      state · policy · idempotency     provider response
 ```
 
 ### Core implementation
