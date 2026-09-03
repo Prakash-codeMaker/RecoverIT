@@ -1,0 +1,1 @@
+ALTER TABLE feedback_sprint_responses ADD COLUMN user_id text;
