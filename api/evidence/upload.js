@@ -15,17 +15,20 @@ export default async function(req,res){
   if(!own.rows[0])return res.status(404).json({error:'Case not found.'});
   if(f.buffer.length>10*1024*1024)return res.status(413).json({error:'File too large. Max 10 MB.'});
 
-  const allowed=new Set(['image/jpeg','image/png','image/webp','application/pdf','video/mp4']);
-  if(!allowed.has(f.contentType))return res.status(415).json({error:'Unsupported file type.'});
+  const lowerName=String(f.filename||'').toLowerCase();
+  const inferredMime=lowerName.endsWith('.pdf')?'application/pdf':lowerName.endsWith('.jpg')||lowerName.endsWith('.jpeg')?'image/jpeg':lowerName.endsWith('.png')?'image/png':lowerName.endsWith('.webp')?'image/webp':lowerName.endsWith('.gif')?'image/gif':String(f.contentType||'').toLowerCase();
+  const contentType=String(f.contentType||'').toLowerCase()==='application/octet-stream'?inferredMime:String(f.contentType||'').toLowerCase();
+  const allowed=new Set(['image/jpeg','image/png','image/webp','image/gif','application/pdf','video/mp4']);
+  if(!allowed.has(contentType))return res.status(415).json({error:'Unsupported file type. Use JPG, PNG, WEBP, GIF or PDF.'});
 
   const hash=await crypto.subtle.digest('SHA-256',f.buffer);
   const hex=Array.from(new Uint8Array(hash)).map(x=>x.toString(16).padStart(2,'0')).join('');
   const ext=(f.filename.split('.').pop()||'bin').toLowerCase();
   const key=`evidence/${req.user.id}/${crypto.randomUUID()}.${ext}`;
-  const url=await storage.put(key,f.buffer,f.contentType);
+  const url=await storage.put(key,f.buffer,contentType);
   const inserted=await db.query(
     'INSERT INTO evidence (case_id,user_id,filename,content_type,bytes,storage_key,sha256) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id',
-    [caseId,req.user.id,f.filename,f.contentType,f.buffer.length,key,hex]
+    [caseId,req.user.id,f.filename,contentType,f.buffer.length,key,hex]
   );
 
   let verification={status:'PENDING',summary:'Evidence was stored; document verification has not completed yet.'};
@@ -56,7 +59,7 @@ export default async function(req,res){
     const prompt=`Verify this payment evidence against the existing RecoverIT case. CASE STORY: ${String(caseRow?.description||'').slice(0,3500)}. Known amount=${caseRow?.amount||''} currency=${caseRow?.currency||'INR'} merchant=${caseRow?.merchant_name||''} reference=${caseRow?.transaction_reference||''} method=${caseRow?.payment_method||''}. Extract visible payment facts. Return ONLY JSON: {"verdict":"VERIFIED|REVIEW|REJECT","summary":"short","extracted":{"merchant":"","amount":"","currency":"","transaction_reference":"","date":"","payment_method":"","payment_status":""},"matches":["short"],"contradictions":["short"],"authenticity_signals":["short"],"confidence":0}. VERIFIED requires material support for the reported payment; REVIEW means relevant but incomplete; REJECT means unrelated, contradictory, or unreadable. Never claim authenticity solely from appearance.`;
 
     if(verification.status==='PENDING'){
-      const out=await analyzeDocument({mimeType:f.contentType,bytes:f.buffer,prompt});
+      const out=await analyzeDocument({mimeType:contentType,bytes:f.buffer,prompt});
       if(out.available&&out.parsed){
         const parsed=out.parsed;
         verification={status:String(parsed.verdict||'REVIEW').toUpperCase(),summary:String(parsed.summary||'').slice(0,1000),parsed,provider:out.provider,failover_from:out.failover_from||[]};
