@@ -48,7 +48,10 @@
   if(activeCaseId) signal('case_open',{case_id:activeCaseId},activeCaseId);
 
   // Case creation is tracked only after the app confirms the case exists.
-  window.RecoverITAnalytics={signal,visitorId,sessionId};
+  // Preserve the lightweight analytics API installed by analytics.js so pages
+  // can safely call RecoverITAnalytics.event(...) after motion.js loads.
+  const existingAnalytics=window.RecoverITAnalytics||{};
+  window.RecoverITAnalytics={...existingAnalytics,signal,event:existingAnalytics.event||signal,visitorId,sessionId};
   window.addEventListener('recoverit:case-created',e=>{
     const id=e.detail?.case_id||e.detail?.id||null;
     signal('case_created',{source:'client_confirmation'},id);
