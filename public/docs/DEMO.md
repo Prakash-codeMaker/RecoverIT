@@ -1,5 +1,13 @@
 # RecoverIT demo
 
+## 🎥 Watch the complete walkthrough
+
+**[▶ Watch the RecoverIT demo on YouTube](https://youtu.be/QKm20xYxkEY)**
+
+**Presented by Prakash Chand Jain.** The video walks through the working product, the end-to-end recovery workflow, the AI/deterministic control boundary, evidence verification, approval-gated action, and the architecture behind the system.
+
+> **One real product journey, from a messy payment problem to a verified, auditable outcome.**
+
 The strongest walkthrough is one real product journey rather than a slide deck.
 
 ## Five-minute walkthrough
