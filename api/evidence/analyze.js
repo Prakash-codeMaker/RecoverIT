@@ -14,7 +14,7 @@ export default async function(req,res){
   const out=await analyzeDocument({mimeType:e.content_type,bytes:file.buffer,prompt}); if(!out.available) return res.status(503).json(out);
   let parsed=out.parsed||{}; if(!Object.keys(parsed).length) parsed={extracted_text:out.text};
   const authenticity=Array.isArray(parsed.authenticity_signals)?parsed.authenticity_signals:[];
-  await db.query('UPDATE evidence_analysis SET status=$1,extracted_text=$2,structured_data=$3,authenticity_signals=$4,confidence=$5,model=$6,updated_at=now() WHERE evidence_id=$7 AND analysis_type=$8',['COMPLETED',String(parsed.extracted_text||''),parsed,JSON.stringify(authenticity),Number.isFinite(Number(parsed.confidence))?Number(parsed.confidence):null,process.env.RECOVERIT_GEMINI_MODEL||'gemini-2.5-flash',evidenceId,'document_understanding']);
+  await db.query('UPDATE evidence_analysis SET status=$1,extracted_text=$2,structured_data=$3,authenticity_signals=$4,confidence=$5,model=$6,updated_at=now() WHERE evidence_id=$7 AND analysis_type=$8',['COMPLETED',String(parsed.extracted_text||''),parsed,JSON.stringify(authenticity),Number.isFinite(Number(parsed.confidence))?Number(parsed.confidence):null,process.env.RECOVERIT_GEMINI_MODEL||'gemini-3.6-flash',evidenceId,'document_understanding']);
   res.json({ok:true,analysis:parsed,authenticity_signals:authenticity});
  }catch(error){await db.query('UPDATE evidence_analysis SET status=$1,error=$2,updated_at=now() WHERE evidence_id=$3 AND analysis_type=$4',['FAILED',String(error.message||error),evidenceId,'document_understanding']);res.status(500).json({error:'Evidence analysis failed.',detail:String(error.message||error)})}
 }
