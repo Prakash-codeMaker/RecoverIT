@@ -22,9 +22,6 @@ expose=true
 name="TWILIO_SMS_FROM"
 expose=true
 [[secret]]
-name="TWILIO_WHATSAPP_FROM"
-expose=true
-[[secret]]
 name="RAZORPAY_KEY_ID"
 expose=true
 [[secret]]
