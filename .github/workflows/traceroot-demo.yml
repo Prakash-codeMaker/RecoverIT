@@ -1,0 +1,31 @@
+name: TraceRoot reliability demo
+
+on:
+  pull_request:
+    paths:
+      - "examples/traceroot-agent-reliability/**"
+      - ".github/workflows/traceroot-demo.yml"
+  push:
+    paths:
+      - "examples/traceroot-agent-reliability/**"
+      - ".github/workflows/traceroot-demo.yml"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: examples/traceroot-agent-reliability
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: Run tests
+        run: npm test
+      - name: Type-check
+        run: npm run typecheck
