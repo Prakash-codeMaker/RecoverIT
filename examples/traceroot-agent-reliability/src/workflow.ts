@@ -100,7 +100,7 @@ export async function runSyntheticCase(
   input: SyntheticCase,
   dependencies: WorkflowDependencies,
 ): Promise<WorkflowResult> {
-  return observe(
+  return observe<[], WorkflowResult>(
     {
       name: "recoverit.case.workflow",
       type: "agent",
@@ -114,7 +114,7 @@ export async function runSyntheticCase(
         execution_mode: "synthetic",
       },
     },
-    async () => {
+    async (): Promise<WorkflowResult> => {
       updateCurrentSpan({
         attributes: {
           "recoverit.case.id": input.caseId,
