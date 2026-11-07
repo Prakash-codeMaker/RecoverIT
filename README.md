@@ -211,6 +211,16 @@ AI INTERPRETATION  →  DETERMINISTIC CONTROL PLANE  →  EXTERNAL ACTION
 
 ---
 
+## TraceRoot observability example
+
+A standalone TypeScript companion example maps the synthetic RecoverIT workflow to nested TraceRoot spans. It demonstrates a transient AI/provider failure and retry, evidence-gate blocking, route preparation, and explicit approval before a synthetic external action.
+
+[Open the TraceRoot agent reliability demo](./examples/traceroot-agent-reliability/README.md).
+
+The example is deliberately separate from the deployed Hatchable runtime and makes no real payment, email, SMS, or provider calls. Its test suite covers the safety and retry invariants; the README includes the exact local run commands.
+
+---
+
 ## Validation
 
 The repository includes a synthetic end-to-end harness that exercises the actual workflow contracts.
