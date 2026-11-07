@@ -58,7 +58,10 @@ try {
   console.log(JSON.stringify({ scenario: "synthetic-approved-case", result }, null, 2));
 } finally {
   if (apiKey) {
-    await TraceRoot.flush();
-    await TraceRoot.shutdown();
+    try {
+      await TraceRoot.flush();
+    } finally {
+      await TraceRoot.shutdown();
+    }
   }
 }
