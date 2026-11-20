@@ -22,6 +22,8 @@
 
 > **AI interprets the messy parts. Deterministic software controls the consequential parts.**
 
+> **Need a similar workflow built for your team?** I take on scoped paid engineering tasks across APIs, evidence-aware workflows, approvals and reliability. [View the work](https://pcj-portfolio.vercel.app/) · [Send a paid project brief](https://pcj-portfolio.vercel.app/start-a-project.html)
+
 ---
 
 ## The problem
