@@ -17,7 +17,8 @@
   <a href="https://youtu.be/QKm20xYxkEY"><strong>🎥 Watch the demo</strong></a> ·
   <a href="./public/docs/DEMO.md"><strong>Demo</strong></a> ·
   <a href="./public/docs/ARCHITECTURE.md"><strong>Architecture</strong></a> ·
-  <a href="./public/docs/WORKFLOW.md"><strong>Workflow</strong></a>
+  <a href="./public/docs/WORKFLOW.md"><strong>Workflow</strong></a> ·
+  <a href="https://p9340297.wordpress.com/2026/11/20/recoverit-auditable-payment-recovery-workflow/"><strong>Engineering article</strong></a>
 </p>
 
 > **AI interprets the messy parts. Deterministic software controls the consequential parts.**
